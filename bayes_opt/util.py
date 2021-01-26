@@ -147,7 +147,7 @@ class MultiUtilityFunction(UtilityFunction):
 
         self._iters_counter = 0
 
-        if kind not in ['multi_ucb']:
+        if kind not in ['multi_ucb', 'ucb', 'ei', 'poi']:
             err = "The utility function " \
                   "{} has not been implemented, " \
                   "please choose one of 'multi_ucb'.".format(kind)
@@ -158,6 +158,12 @@ class MultiUtilityFunction(UtilityFunction):
     def utility(self, x, gp, y_max):
         if self.kind == 'multi_ucb':
             return self._multi_ucb(x, target_gp=gp, source_gp=self.source_gp, kappa=self.kappa)
+        if self.kind == 'ucb':
+            return self._ucb(x, gp, self.kappa)
+        if self.kind == 'ei':
+            return self._ei(x, gp, y_max, self.xi)
+        if self.kind == 'poi':
+            return self._poi(x, gp, y_max, self.xi)
 
     @staticmethod
     def _multi_ucb(x, target_gp, source_gp, kappa):

@@ -151,6 +151,10 @@ class BayesianOptimization(Observable):
     def data(self):
         return self._data
 
+    @data.setter
+    def data(self, newData):
+        self._data = newData
+
     @property
     def space(self):
         return self._space
@@ -318,9 +322,9 @@ class BayesianOptimization(Observable):
 class TargetBayesianOptimization(BayesianOptimization):
 
     def __init__(self, f, pbounds, source_gp, random_state=None, verbose=2,
-                bounds_transformer=None):
+                bounds_transformer=None, cost=0):
         BayesianOptimization.__init__(self, f, pbounds, random_state, verbose,
-                bounds_transformer)
+                bounds_transformer, cost)
         self.source_gp = source_gp
 
     def maximize(self,
@@ -387,11 +391,17 @@ class TargetBayesianOptimization(BayesianOptimization):
                 util.update_params()
                 x_probe = self.suggest(util)
                 iteration += 1
-
             self.probe(x_probe, lazy=False)
 
             if self._bounds_transformer:
                 self.set_bounds(
                     self._bounds_transformer.transform(self._space))
 
+            self.data.add_points(self.max['target'], self.max['params'], self.cost)
+
         self.dispatch(Events.OPTIMIZATION_END)
+
+    def transferData(self, other):
+        self.data = other.data
+        for i in range(len(self.data.bestResult)):
+            self.data.bestResult[i] = self._space.target_func(**(self.data.bestPoints[i]))

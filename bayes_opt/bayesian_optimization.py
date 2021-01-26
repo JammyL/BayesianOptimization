@@ -5,6 +5,7 @@ from .event import Events, DEFAULT_EVENTS
 from .logger import _get_default_logger
 from .util import UtilityFunction, MultiUtilityFunction, acq_max, ensure_rng
 
+from dataclasses import dataclass, field
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
 
@@ -61,6 +62,19 @@ class Observable(object):
         for _, callback in self.get_subscribers(event).items():
             callback(event, self)
 
+@dataclass
+class data:
+    bestResult: list[float] = field(default_factory=list)
+    bestPoints: list[dict] = field(default_factory=list)
+    cost: list[int] = field(default_factory=list)
+
+    def add_points(self, newBestResult, newBestPoint, newCost, cumulativeCost=True):
+        self.bestResult.append(newBestResult)
+        self.bestPoints.append(newBestPoint)
+        if cumulativeCost and len(self.cost) > 0:
+            self.cost.append(self.cost[-1] + newCost)
+        else:
+            self.cost.append(newCost)
 
 class BayesianOptimization(Observable):
     """
@@ -102,9 +116,10 @@ class BayesianOptimization(Observable):
         Allows changing the lower and upper searching bounds
     """
     def __init__(self, f, pbounds, random_state=None, verbose=2,
-                 bounds_transformer=None):
+                 bounds_transformer=None, cost=0):
         self._random_state = ensure_rng(random_state)
 
+        self._data = data()
         # Data structure containing the function to be optimized, the bounds of
         # its domain, and a record of the evaluations we have done so far
         self._space = TargetSpace(f, pbounds, random_state)
@@ -122,6 +137,7 @@ class BayesianOptimization(Observable):
 
         self._verbose = verbose
         self._bounds_transformer = bounds_transformer
+        self.cost = cost
         if self._bounds_transformer:
             try:
                 self._bounds_transformer.initialize(self._space)
@@ -130,6 +146,10 @@ class BayesianOptimization(Observable):
                                 'DomainTransformer')
 
         super(BayesianOptimization, self).__init__(events=DEFAULT_EVENTS)
+
+    @property
+    def data(self):
+        return self._data
 
     @property
     def space(self):
@@ -146,6 +166,7 @@ class BayesianOptimization(Observable):
     def register(self, params, target):
         """Expect observation with known target"""
         self._space.register(params, target)
+        self.data.add_points(self.max['target'], self.max['params'], self.cost)
         self.dispatch(Events.OPTIMIZATION_STEP)
 
     def probe(self, params, lazy=True):
@@ -267,12 +288,13 @@ class BayesianOptimization(Observable):
                 util.update_params()
                 x_probe = self.suggest(util)
                 iteration += 1
-
             self.probe(x_probe, lazy=False)
 
             if self._bounds_transformer:
                 self.set_bounds(
                     self._bounds_transformer.transform(self._space))
+
+            self.data.add_points(self.max['target'], self.max['params'], self.cost)
 
         self.dispatch(Events.OPTIMIZATION_END)
 

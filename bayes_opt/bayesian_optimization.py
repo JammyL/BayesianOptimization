@@ -3,7 +3,7 @@ import warnings
 from .target_space import TargetSpace
 from .event import Events, DEFAULT_EVENTS
 from .logger import _get_default_logger
-from .util import UtilityFunction, acq_max, ensure_rng
+from .util import UtilityFunction, MultiUtilityFunction, acq_max, ensure_rng
 
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -290,3 +290,86 @@ class BayesianOptimization(Observable):
     def set_gp_params(self, **params):
         """Set parameters to the internal Gaussian Process Regressor"""
         self._gp.set_params(**params)
+
+
+
+class TargetBayesianOptimization(BayesianOptimization):
+
+    def __init__(self, f, pbounds, source_gp, random_state=None, verbose=2,
+                bounds_transformer=None):
+        BayesianOptimization.__init__(self, f, pbounds, random_state, verbose,
+                bounds_transformer)
+        self.source_gp = source_gp
+
+    def maximize(self,
+                 init_points=5,
+                 n_iter=25,
+                 acq='multi_ucb',
+                 kappa=2.576,
+                 kappa_decay=1,
+                 kappa_decay_delay=0,
+                 xi=0.0,
+                 **gp_params):
+        """
+        Probes the target space to find the parameters that yield the maximum
+        value for the given function.
+
+        Parameters
+        ----------
+        init_points : int, optional(default=5)
+            Number of iterations before the explorations starts the exploration
+            for the maximum.
+
+        n_iter: int, optional(default=25)
+            Number of iterations where the method attempts to find the maximum
+            value.
+
+        acq: {'ucb', 'ei', 'poi'}
+            The acquisition method used.
+                * 'ucb' stands for the Upper Confidence Bounds method
+                * 'ei' is the Expected Improvement method
+                * 'poi' is the Probability Of Improvement criterion.
+
+        kappa: float, optional(default=2.576)
+            Parameter to indicate how closed are the next parameters sampled.
+                Higher value = favors spaces that are least explored.
+                Lower value = favors spaces where the regression function is the
+                highest.
+
+        kappa_decay: float, optional(default=1)
+            `kappa` is multiplied by this factor every iteration.
+
+        kappa_decay_delay: int, optional(default=0)
+            Number of iterations that must have passed before applying the decay
+            to `kappa`.
+
+        xi: float, optional(default=0.0)
+            [unused]
+        """
+        self._prime_subscriptions()
+        self.dispatch(Events.OPTIMIZATION_START)
+        self._prime_queue(init_points)
+        self.set_gp_params(**gp_params)
+
+        util = MultiUtilityFunction(kind=acq,
+                               kappa=kappa,
+                               xi=xi,
+                               source_gp = self.source_gp,
+                               kappa_decay=kappa_decay,
+                               kappa_decay_delay=kappa_decay_delay)
+        iteration = 0
+        while not self._queue.empty or iteration < n_iter:
+            try:
+                x_probe = next(self._queue)
+            except StopIteration:
+                util.update_params()
+                x_probe = self.suggest(util)
+                iteration += 1
+
+            self.probe(x_probe, lazy=False)
+
+            if self._bounds_transformer:
+                self.set_bounds(
+                    self._bounds_transformer.transform(self._space))
+
+        self.dispatch(Events.OPTIMIZATION_END)

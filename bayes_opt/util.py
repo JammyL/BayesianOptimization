@@ -83,7 +83,7 @@ class UtilityFunction(object):
         self._kappa_decay_delay = kappa_decay_delay
 
         self.xi = xi
-        
+
         self._iters_counter = 0
 
         if kind not in ['ucb', 'ei', 'poi']:
@@ -121,7 +121,7 @@ class UtilityFunction(object):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             mean, std = gp.predict(x, return_std=True)
-  
+
         a = (mean - y_max - xi)
         z = a / std
         return a * norm.cdf(z) + std * norm.pdf(z)
@@ -135,6 +135,35 @@ class UtilityFunction(object):
         z = (mean - y_max - xi)/std
         return norm.cdf(z)
 
+class MultiUtilityFunction(UtilityFunction):
+    def __init__(self, kind, kappa, xi, source_gp, kappa_decay=1, kappa_decay_delay=0):
+
+        self.kappa = kappa
+        self._kappa_decay = kappa_decay
+        self._kappa_decay_delay = kappa_decay_delay
+        self.source_gp = source_gp
+
+        self.xi = xi
+
+        self._iters_counter = 0
+
+        if kind not in ['multi_ucb']:
+            err = "The utility function " \
+                  "{} has not been implemented, " \
+                  "please choose one of 'multi_ucb'.".format(kind)
+            raise NotImplementedError(err)
+        else:
+            self.kind = kind
+
+    def utility(self, x, gp, y_max):
+        if self.kind == 'multi_ucb':
+            return self._multi_ucb(x, target_gp=gp, source_gp=self.source_gp, kappa=self.kappa)
+
+    @staticmethod
+    def _multi_ucb(x, target_gp, source_gp, kappa):
+        target_mean, target_std = target_gp.predict(x, return_std=True)
+        source_mean = source_gp.predict(x, return_std=False)
+        return target_mean + source_mean - ((source_mean - target_mean) * np.exp(-(target_std * kappa)))
 
 def load_logs(optimizer, logs):
     """Load previous ...

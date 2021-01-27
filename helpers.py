@@ -1,6 +1,7 @@
 import qutip as qt
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 
 
 def calcStateInfidelity(finalState, targetState):
@@ -37,12 +38,13 @@ def generatePropagator(a1, a2):
     return (-1j) * R_z * R_y
 
 
-def plot_bo(bo):
+def plot_bo(bo, title):
     X, Y = np.mgrid[0:2:1000j, -2:2:1000j]
     positions = np.vstack([X.ravel(), Y.ravel()]).T
     mean, sigma = bo._gp.predict(positions, return_std=True)
     mean = np.reshape(mean, (-1,1000))
     sigma = np.reshape(sigma, (-1, 1000))
+    mean = 1 - mean
 
     fig1 = plt.figure()
     fig2 = plt.figure()
@@ -58,10 +60,9 @@ def plot_bo(bo):
     ax2.set_xlabel('a1')
     ax2.set_ylabel('a2')
 
-    ax1.set_title('Mean')
-    ax2.set_title('Sigma')
+    ax1.set_title(title + ': Mean')
+    ax2.set_title(title + ': Sigma')
 
-    fig1.savefig("plus_op_mean.png")
-    fig2.savefig("plus_op_sigma.png")
+    # fig1.savefig("plus_op_mean.png")
+    # fig2.savefig("plus_op_sigma.png")
 
-    plt.show()

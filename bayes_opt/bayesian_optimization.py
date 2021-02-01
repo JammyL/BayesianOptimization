@@ -318,14 +318,13 @@ class BayesianOptimization(Observable):
         self._gp.set_params(**params)
 
 
-
 class TargetBayesianOptimization(BayesianOptimization):
 
-    def __init__(self, f, pbounds, source_gp, random_state=None, verbose=2,
+    def __init__(self, f, pbounds, source_bo, random_state=None, verbose=2,
                 bounds_transformer=None, cost=0):
         BayesianOptimization.__init__(self, f, pbounds, random_state, verbose,
                 bounds_transformer, cost)
-        self.source_gp = source_gp
+        self.source_bo = source_bo
 
     def maximize(self,
                  init_points=5,
@@ -380,7 +379,7 @@ class TargetBayesianOptimization(BayesianOptimization):
         util = MultiUtilityFunction(kind=acq,
                                kappa=kappa,
                                xi=xi,
-                               source_gp = self.source_gp,
+                               source_bo = self.source_bo,
                                kappa_decay=kappa_decay,
                                kappa_decay_delay=kappa_decay_delay)
         iteration = 0

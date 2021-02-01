@@ -136,12 +136,12 @@ class UtilityFunction(object):
         return norm.cdf(z)
 
 class MultiUtilityFunction(UtilityFunction):
-    def __init__(self, kind, kappa, xi, source_gp, kappa_decay=1, kappa_decay_delay=0):
+    def __init__(self, kind, kappa, xi, source_bo, kappa_decay=1, kappa_decay_delay=0):
 
         self.kappa = kappa
         self._kappa_decay = kappa_decay
         self._kappa_decay_delay = kappa_decay_delay
-        self.source_gp = source_gp
+        self.source_bo = source_bo
 
         self.xi = xi
 
@@ -157,7 +157,7 @@ class MultiUtilityFunction(UtilityFunction):
 
     def utility(self, x, gp, y_max):
         if self.kind == 'multi_ucb':
-            return self._multi_ucb(x, target_gp=gp, source_gp=self.source_gp, kappa=self.kappa)
+            return self._multi_ucb(x, target_gp=gp, source_gp=self.source_bo._gp, kappa=self.kappa)
         if self.kind == 'ucb':
             return self._ucb(x, gp, self.kappa)
         if self.kind == 'ei':

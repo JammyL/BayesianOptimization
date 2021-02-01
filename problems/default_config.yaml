@@ -1,0 +1,17 @@
+iters:
+  init: 10
+  state-opt: 50
+  control-opt: 20
+  transfer-init: 2
+  transfer-opt: 20
+  transfer-refine: 10
+
+cost:
+  state: 1
+  gate: 10
+
+pbounds:
+  a1:
+    !!python/tuple [0, 2]
+  a2:
+    !!python/tuple [-2,2]

@@ -1,10 +1,10 @@
 iters:
-  init: 10
-  state-opt: 40
-  control-opt: 20
+  init: 20
+  state-opt: 50
+  control-opt: 40
   transfer-init: 5
-  transfer-opt: 10
-  transfer-refine: 10
+  transfer-opt: 20
+  transfer-refine: 28
 
 cost:
   state: 1

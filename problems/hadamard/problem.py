@@ -5,8 +5,8 @@ import qutip as qt
 
 
 class hadamard(problem):
-    def __init__(self, initialState, targetGate=snot(1), configPath='./problems/hadamard/config.yaml'):
+    def __init__(self, initialState, targetGate=snot(1), configPath='./problems/hadamard/config.yaml', verbose=2):
         targetState = targetGate * initialState
         testState = singleStateFunc(initialState, targetState)
         testGate = singleGateFunc(targetGate)
-        problem.__init__(self, testState=testState, testGate=testGate, configPath=configPath)
+        problem.__init__(self, testState=testState, testGate=testGate, configPath=configPath, verbose=verbose)

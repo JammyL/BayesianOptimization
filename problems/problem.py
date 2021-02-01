@@ -39,7 +39,7 @@ def fid_to_infidelity(data):
     return 1 - data
 
 class problem:
-    def __init__(self, testState, testGate, configPath='./problems/default_config.yaml'):
+    def __init__(self, testState, testGate, configPath='./problems/default_config.yaml', verbose=2):
         self.testState = testState
         self.testGate = testGate
         with open(configPath) as file:
@@ -50,26 +50,26 @@ class problem:
         self.StateOptimizer = BayesianOptimization(
             f=testState,
             pbounds=self.config['pbounds'],
-            verbose=2, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
+            verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
             cost=self.config['cost']['state'],
-            random_state=2,
+            random_state=1,
         )
 
         self.TransferOptimizer = TargetBayesianOptimization(
             f=testGate,
             pbounds=self.config['pbounds'],
-            verbose=2, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
+            verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
             source_bo=self.StateOptimizer,
             cost=self.config['cost']['gate'],
-            random_state=2,
+            random_state=1,
         )
 
         self.ControlOptimizer = BayesianOptimization(
             f=testGate,
             pbounds=self.config['pbounds'],
-            verbose=2, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
+            verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
             cost=self.config['cost']['gate'],
-            random_state=2,
+            random_state=1,
         )
 
     def default_opt(self, kappa=1, kappa_decay=0.5, kappa_decay_delay=5, acq='ucb', multiAcq='multi_ucb', stateKappa=10):
@@ -135,14 +135,16 @@ class problem:
 
     def get_result(self, format_func=fid_to_infidelity):
         transferResult = self.TransferOptimizer.data.bestResult
+        transferCosts = self.TransferOptimizer.data.cost
         controlResult = self.ControlOptimizer.data.bestResult
+        controlCosts = self.ControlOptimizer.data.cost
 
         for i in range(len(transferResult)):
             transferResult[i] = format_func(transferResult[i])
         for i in range(len(controlResult)):
             controlResult[i] = format_func(controlResult[i])
 
-        return transferResult, controlResult
+        return transferResult, transferCosts, controlResult, controlCosts
 
 
     def plot_result(self, title, show=True, save=False, saveFile='./figures/infidelity'):
@@ -150,14 +152,12 @@ class problem:
         cost = self.config['cost']
 
         transferPoint = (iters['init'] + iters['state-opt']) * cost['state']
-        regularBayesPoint = transferPoint + ((iters['transfer-init'] + iters['transfer-opt']) * cost['gate'])
-
-        transferResult, controlResult = self.get_result()
+        transferResult, transferCosts, controlResult, controlCosts = self.get_result()
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.plot(self.TransferOptimizer.data.cost, transferResult, label='With Transfer', color='b')
-        ax.plot(self.ControlOptimizer.data.cost, controlResult, label='No Transfer', color='r')
+        ax.plot(transferCosts, transferResult, label='With Transfer', color='b')
+        ax.plot(controlCosts, controlResult, label='No Transfer', color='r')
         ax.set_xlabel('Cost')
         ax.set_ylabel('Best Infidelity')
         ax.grid('--')

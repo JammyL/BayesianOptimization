@@ -39,27 +39,29 @@ def fid_to_infidelity(data):
     return 1 - data
 
 class problem:
-    def __init__(self, testState, testGate, configPath='./problems/default_config.yaml', verbose=2):
-        self.testState = testState
+    def __init__(self, testState_list, testGate, configPath='./problems/default_config.yaml', verbose=2):
+        self.testState_list = testState_list
         self.testGate = testGate
         with open(configPath) as file:
             # The FullLoader parameter handles the conversion from YAML
             # scalar values to Python the dictionary format
             self.config = yaml.load(file, Loader=yaml.FullLoader)
 
-        self.StateOptimizer = BayesianOptimization(
+        # Primary State Optimizer is the first in the list
+        # Data will be transfered from this optimizer 
+        self.StateOptimizer_list = [BayesianOptimization(
             f=testState,
             pbounds=self.config['pbounds'],
             verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
             cost=self.config['cost']['state'],
             random_state=1,
-        )
+        ) for testState in testState_list]
 
         self.TransferOptimizer = TargetBayesianOptimization(
             f=testGate,
             pbounds=self.config['pbounds'],
             verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
-            source_bo=self.StateOptimizer,
+            source_bo_list=self.StateOptimizer_list,
             cost=self.config['cost']['gate'],
             random_state=1,
         )
@@ -86,22 +88,26 @@ class problem:
             for p in params:
                 newPoint[p] = initPoints[j][i]
                 j += 1
-            stateTarget = self.testState(**newPoint)
+            for k in range(len(self.testState_list)):
+                stateTarget = self.testState_list[k](**newPoint)
+                self.StateOptimizer_list[k].register(newPoint, stateTarget)
             opTarget = self.testGate(**newPoint)
-            self.StateOptimizer.register(newPoint, stateTarget)
             self.ControlOptimizer.register(newPoint, opTarget)
 
-        self.StateOptimizer.maximize(
-            init_points=0,
-            n_iter=iters['state-opt'],
-            kappa=stateKappa,
-            acq=acq,
-        )
-        self.TransferOptimizer.transferData(self.StateOptimizer)
+        for StateOptimizer in self.StateOptimizer_list:
+            StateOptimizer.maximize(
+                init_points=0,
+                n_iter=iters['state-opt'],
+                kappa=stateKappa,
+                acq=acq,
+            )
+
+        self.TransferOptimizer.transferData(self.StateOptimizer_list[0])
 
         for _ in range(iters['transfer-init']):
+            stateIndex = np.random.randint(0, len(self.testState_list), 1)[0]
             util = UtilityFunction(acq, kappa=1, xi=0.0)
-            newPoint = self.StateOptimizer.suggest(util)
+            newPoint = self.StateOptimizer_list[stateIndex].suggest(util)
             target = self.testGate(**newPoint)
             self.TransferOptimizer.register(newPoint, target)
 
@@ -124,10 +130,10 @@ class problem:
             kappa_decay_delay=kappa_decay_delay,
         )
 
-    def plot_gps(self, stateTitle='State', transferTitle='Gate',
+    def plot_gps(self, stateIndex=0, stateTitle='State', transferTitle='Gate',
                 controlTitle='Control', show=True, save=False, saveFile='./figures/'):
 
-        plot_bo(self.StateOptimizer, stateTitle, save=save, saveDir=saveDir)
+        plot_bo(self.StateOptimizer_list[stateIndex], stateTitle, save=save, saveDir=saveDir)
         plot_bo(self.TransferOptimizer, transferTitle, save=save, saveDir=saveDir)
         plot_bo(self.ControlOptimizer, controlTitle, save=save, saveDir=saveDir)
         if show:

@@ -136,12 +136,12 @@ class UtilityFunction(object):
         return norm.cdf(z)
 
 class MultiUtilityFunction(UtilityFunction):
-    def __init__(self, kind, kappa, xi, source_bo, kappa_decay=1, kappa_decay_delay=0):
+    def __init__(self, kind, kappa, xi, source_bo_list, kappa_decay=1, kappa_decay_delay=0):
 
         self.kappa = kappa
         self._kappa_decay = kappa_decay
         self._kappa_decay_delay = kappa_decay_delay
-        self.source_bo = source_bo
+        self.source_gp_list = [bo._gp for bo in source_bo_list]
 
         self.xi = xi
 
@@ -157,7 +157,7 @@ class MultiUtilityFunction(UtilityFunction):
 
     def utility(self, x, gp, y_max):
         if self.kind == 'multi_ucb':
-            return self._multi_ucb(x, target_gp=gp, source_gp=self.source_bo._gp, kappa=self.kappa)
+            return self._multi_ucb(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa)
         if self.kind == 'ucb':
             return self._ucb(x, gp, self.kappa)
         if self.kind == 'ei':
@@ -166,10 +166,13 @@ class MultiUtilityFunction(UtilityFunction):
             return self._poi(x, gp, y_max, self.xi)
 
     @staticmethod
-    def _multi_ucb(x, target_gp, source_gp, kappa):
+    def _multi_ucb(x, target_gp, source_gp_list, kappa):
         target_mean, target_std = target_gp.predict(x, return_std=True)
-        source_mean = source_gp.predict(x, return_std=False)
-        return target_mean + source_mean - ((source_mean - target_mean) * np.exp(-(target_std * kappa)))
+        source_mean_sum = 0
+        for source_gp in source_gp_list:
+            source_mean_sum = source_gp.predict(x, return_std=False)
+        source_mean_avg = source_mean_sum / len(source_gp_list)
+        return target_mean + source_mean_avg - ((source_mean_avg - target_mean) * np.exp(-(target_std * kappa)))
 
 def load_logs(optimizer, logs):
     """Load previous ...

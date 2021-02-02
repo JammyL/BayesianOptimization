@@ -320,11 +320,11 @@ class BayesianOptimization(Observable):
 
 class TargetBayesianOptimization(BayesianOptimization):
 
-    def __init__(self, f, pbounds, source_bo, random_state=None, verbose=2,
+    def __init__(self, f, pbounds, source_bo_list, random_state=None, verbose=2,
                 bounds_transformer=None, cost=0):
         BayesianOptimization.__init__(self, f, pbounds, random_state, verbose,
                 bounds_transformer, cost)
-        self.source_bo = source_bo
+        self.source_bo_list = source_bo_list
 
     def maximize(self,
                  init_points=5,
@@ -379,7 +379,7 @@ class TargetBayesianOptimization(BayesianOptimization):
         util = MultiUtilityFunction(kind=acq,
                                kappa=kappa,
                                xi=xi,
-                               source_bo = self.source_bo,
+                               source_bo_list = self.source_bo_list,
                                kappa_decay=kappa_decay,
                                kappa_decay_delay=kappa_decay_delay)
         iteration = 0

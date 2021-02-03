@@ -1,9 +1,10 @@
 # Parameters for optimization routines
 # All parameters must be included
 # Extra optimizations can be added as is done in "transfer:"
+# Optimizations must be given a unique name as is done in "transfer:"
 state:
   opt-1:
-    iters: 50
+    iters: 30
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1
@@ -17,19 +18,29 @@ transfer:
     kappa-decay: 1
     decay-delay: 0
   opt-2:
-    iters: 28
-    acq: 'multi_ucb'
-    kappa: 0.001
+    iters: 33
+    acq: 'ucb'
+    kappa: 0.1
     kappa-decay: 0.5
     decay-delay: 0
+    # Refine reduces the search bounds to a box of length twice the value specified here centred on the current maximum
+    # Refinement is done BEFORE the optimization in which it is specified
+    refine: 0.1
 
 control:
   opt-1:
-    iters: 50
+    iters: 30
     acq: 'ucb'
-    kappa: 1
+    kappa: 5
     kappa-decay: 0.5
     decay-delay: 5
+  opt-2:
+    iters: 30
+    acq: 'ucb'
+    kappa: 0.001
+    kappa-decay: 0.5
+    decay-delay: 0
+    refine: 0.1
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair

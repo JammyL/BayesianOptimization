@@ -91,11 +91,14 @@ class problem:
             for k in range(len(self.testState_list)):
                 stateTarget = self.testState_list[k](**newPoint)
                 self.StateOptimizer_list[k].register(newPoint, stateTarget)
-            opTarget = self.testGate(**newPoint)
-            self.ControlOptimizer.register(newPoint, opTarget)
+            gateTarget = self.testGate(**newPoint)
+            self.ControlOptimizer.register(newPoint, gateTarget)
 
         for StateOptimizer in self.StateOptimizer_list:
             for optimization in self.config['state'].values():
+                if 'refine' in optimization.keys():
+                    new_bounds = StateOptimizer.get_new_bounds(optimization['refine'])
+                    StateOptimizer.set_bounds(new_bounds)
                 StateOptimizer.maximize(
                     init_points=0,
                     n_iter=optimization['iters'],
@@ -115,6 +118,9 @@ class problem:
             self.TransferOptimizer.register(newPoint, target)
 
         for optimization in self.config['transfer'].values():
+            if 'refine' in optimization.keys():
+                new_bounds = self.TransferOptimizer.get_new_bounds(optimization['refine'])
+                self.TransferOptimizer.set_bounds(new_bounds)
             self.TransferOptimizer.maximize(
                 init_points=0,
                 n_iter=optimization['iters'],
@@ -125,6 +131,9 @@ class problem:
             )
 
         for optimization in self.config['control'].values():
+            if 'refine' in optimization.keys():
+                new_bounds = self.ControlOptimizer.get_new_bounds(optimization['refine'])
+                self.ControlOptimizer.set_bounds(new_bounds)
             self.ControlOptimizer.maximize(
                 init_points=0,
                 n_iter=optimization['iters'],

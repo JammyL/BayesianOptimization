@@ -317,6 +317,13 @@ class BayesianOptimization(Observable):
         """Set parameters to the internal Gaussian Process Regressor"""
         self._gp.set_params(**params)
 
+    def get_new_bounds(self, new_size):
+        new_bounds = {}
+        for coord in self.max['params']:
+            new_bounds[coord] = (self.max['params'][coord] - new_size, self.max['params'][coord] + new_size)
+        return new_bounds
+
+
 
 class TargetBayesianOptimization(BayesianOptimization):
 

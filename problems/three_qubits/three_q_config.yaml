@@ -3,25 +3,33 @@
 # Extra optimizations can be added as is done in "transfer:"
 state:
   opt-1:
-    iters: 50
+    iters: 80
     acq: 'ucb'
-    kappa: 10
+    kappa: 20
     kappa-decay: 1
     decay-delay: 0
 
 transfer:
   opt-1:
-    iters: 20
+    iters: 30
     acq: 'multi_ucb'
     kappa: 2
     kappa-decay: 1
     decay-delay: 0
   opt-2:
-    iters: 28
-    acq: 'multi_ucb'
-    kappa: 0.001
+    iters: 50
+    acq: 'ucb'
+    kappa: 1
     kappa-decay: 0.5
     decay-delay: 0
+    refine: 0.1
+  opt-3:
+    iters: 60
+    acq: 'ucb'
+    kappa: 1
+    kappa-decay: 0.5
+    decay-delay: 0
+    refine: 0.01
 
 control:
   opt-1:
@@ -29,7 +37,21 @@ control:
     acq: 'ucb'
     kappa: 1
     kappa-decay: 0.5
-    decay-delay: 5
+    decay-delay: 10
+  opt-2:
+    iters: 50
+    acq: 'ucb'
+    kappa: 1
+    kappa-decay: 0.5
+    decay-delay: 10
+    refine: 0.1
+  opt-3:
+    iters: 50
+    acq: 'ucb'
+    kappa: 1
+    kappa-decay: 0.5
+    decay-delay: 0
+    refine: 0.01
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
@@ -44,7 +66,7 @@ transfer-init:
 
 cost:
   state: 1
-  gate: 28
+  gate: 10
 
 pbounds:
   a1:

@@ -9,9 +9,10 @@ initialState = qt.basis(2, 0)
 transferResults = []
 controlResults = []
 
-for _ in range(20):
+for _ in range(1):
     p = hadamard(initialState)
     p.default_opt()
+    p.plot_result()
     tResult, tCost, cResult, cCost = p.get_result()
     transferResults.append(tResult)
     controlResults.append(cResult)
@@ -24,4 +25,5 @@ resultsToPickle = {
     'control': np.array(controlResults),
     'control_cost': cCost,
 }
-pickle.dump( resultsToPickle, open( "test.pickle", "wb" ) )
+
+pickle.dump( resultsToPickle, open( "test_2.pickle", "wb" ) )

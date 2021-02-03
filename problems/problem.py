@@ -1,6 +1,7 @@
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
+from copy import deepcopy
 from bayes_opt import BayesianOptimization, TargetBayesianOptimization, UtilityFunction
 
 def plot_bo(bo, title='', save=False, saveFile='./figures/'):
@@ -48,7 +49,7 @@ class problem:
             self.config = yaml.load(file, Loader=yaml.FullLoader)
 
         # Primary State Optimizer is the first in the list
-        # Data will be transfered from this optimizer 
+        # Data will be transfered from this optimizer
         self.StateOptimizer_list = [BayesianOptimization(
             f=testState,
             pbounds=self.config['pbounds'],
@@ -74,15 +75,14 @@ class problem:
             random_state=1,
         )
 
-    def default_opt(self, kappa=1, kappa_decay=0.5, kappa_decay_delay=5, acq='ucb', multiAcq='multi_ucb', stateKappa=10):
+    def default_opt(self):
         pbounds = self.config['pbounds']
-        iters = self.config['iters']
         params = pbounds.keys()
         initPoints = []
         for p in params:
-            initPoints.append(np.random.uniform(low=pbounds[p][0], high=pbounds[p][1], size=self.config['iters']['init']))
+            initPoints.append(np.random.uniform(low=pbounds[p][0], high=pbounds[p][1], size=self.config['state-control-init']))
 
-        for i in range(len(initPoints[0])):
+        for i in range(len(initPoints)):
             newPoint = {}
             j = 0
             for p in params:
@@ -95,40 +95,44 @@ class problem:
             self.ControlOptimizer.register(newPoint, opTarget)
 
         for StateOptimizer in self.StateOptimizer_list:
-            StateOptimizer.maximize(
-                init_points=0,
-                n_iter=iters['state-opt'],
-                kappa=stateKappa,
-                acq=acq,
-            )
+            for optimization in self.config['state'].values():
+                StateOptimizer.maximize(
+                    init_points=0,
+                    n_iter=optimization['iters'],
+                    acq=optimization['acq'],
+                    kappa=optimization['kappa'],
+                    kappa_decay=optimization['kappa-decay'],
+                    kappa_decay_delay=optimization['decay-delay'],
+                )
 
         self.TransferOptimizer.transferData(self.StateOptimizer_list[0])
-
-        for _ in range(iters['transfer-init']):
+        transferInit = self.config['transfer-init']
+        for _ in range(transferInit['iters']):
             stateIndex = np.random.randint(0, len(self.testState_list), 1)[0]
-            util = UtilityFunction(acq, kappa=1, xi=0.0)
+            util = UtilityFunction(transferInit['acq'], kappa=transferInit['kappa'], xi=transferInit['xi'])
             newPoint = self.StateOptimizer_list[stateIndex].suggest(util)
             target = self.testGate(**newPoint)
             self.TransferOptimizer.register(newPoint, target)
 
-        self.TransferOptimizer.maximize(
-            init_points=0,
-            n_iter=iters['transfer-opt'],
-        )
-        self.TransferOptimizer.maximize(
-            init_points=0,
-            n_iter=iters['transfer-refine'],
-            kappa=0.001
-        )
+        for optimization in self.config['transfer'].values():
+            self.TransferOptimizer.maximize(
+                init_points=0,
+                n_iter=optimization['iters'],
+                acq=optimization['acq'],
+                kappa=optimization['kappa'],
+                kappa_decay=optimization['kappa-decay'],
+                kappa_decay_delay=optimization['decay-delay'],
+            )
 
-        self.ControlOptimizer.maximize(
-            init_points=0,
-            n_iter=iters['control-opt'],
-            acq=acq,
-            kappa=kappa,
-            kappa_decay=kappa_decay,
-            kappa_decay_delay=kappa_decay_delay,
-        )
+        for optimization in self.config['control'].values():
+            self.ControlOptimizer.maximize(
+                init_points=0,
+                n_iter=optimization['iters'],
+                acq=optimization['acq'],
+                kappa=optimization['kappa'],
+                kappa_decay=optimization['kappa-decay'],
+                kappa_decay_delay=optimization['decay-delay'],
+            )
 
     def plot_gps(self, stateIndex=0, stateTitle='State', transferTitle='Gate',
                 controlTitle='Control', show=True, save=False, saveFile='./figures/'):
@@ -140,10 +144,10 @@ class problem:
             plt.show()
 
     def get_result(self, format_func=fid_to_infidelity):
-        transferResult = self.TransferOptimizer.data.bestResult
-        transferCosts = self.TransferOptimizer.data.cost
-        controlResult = self.ControlOptimizer.data.bestResult
-        controlCosts = self.ControlOptimizer.data.cost
+        transferResult = deepcopy(self.TransferOptimizer.data.bestResult)
+        transferCosts = deepcopy(self.TransferOptimizer.data.cost)
+        controlResult = deepcopy(self.ControlOptimizer.data.bestResult)
+        controlCosts = deepcopy(self.ControlOptimizer.data.cost)
 
         for i in range(len(transferResult)):
             transferResult[i] = format_func(transferResult[i])
@@ -153,11 +157,13 @@ class problem:
         return transferResult, transferCosts, controlResult, controlCosts
 
 
-    def plot_result(self, title, show=True, save=False, saveFile='./figures/infidelity'):
-        iters = self.config['iters']
+    def plot_result(self, title='', show=True, save=False, saveFile='./figures/infidelity'):
         cost = self.config['cost']
+        totalStateIters = self.config['state-control-init']
+        for optimization in self.config['state'].values():
+            totalStateIters += optimization['iters']
+        transferPoint = totalStateIters * cost['state']
 
-        transferPoint = (iters['init'] + iters['state-opt']) * cost['state']
         transferResult, transferCosts, controlResult, controlCosts = self.get_result()
 
         fig = plt.figure()

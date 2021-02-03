@@ -1,10 +1,35 @@
-iters:
-  init: 10
-  state-opt: 50
-  control-opt: 20
-  transfer-init: 2
-  transfer-opt: 20
-  transfer-refine: 10
+state:
+  init: 20
+  opt-1:
+    iters: 50
+    acq: 'ucb'
+    kappa: 10
+    kappa-decay: 1
+    decay-delay: 0
+
+transfer:
+  init: 5
+  opt-1:
+    iters: 20
+    acq: 'multi_ucb'
+    kappa: 2
+    kappa-decay: 1
+    decay-delay: 0
+  opt-2:
+    iters: 28
+    acq: 'multi_ucb'
+    kappa: 0.001
+    kappa-decay: 0.5
+    decay-delay: 0
+
+control:
+  init: 20
+  opt-1:
+    iters: 40
+    acq: 'ucb'
+    kappa: 1
+    kappa-decay: 0.5
+    decay-delay: 5
 
 cost:
   state: 1

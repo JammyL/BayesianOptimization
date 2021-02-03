@@ -46,7 +46,6 @@ class problem:
             # The FullLoader parameter handles the conversion from YAML
             # scalar values to Python the dictionary format
             self.config = yaml.load(file, Loader=yaml.FullLoader)
-        print(self.config["pbounds"])
 
         # Primary State Optimizer is the first in the list
         # Data will be transfered from this optimizer 

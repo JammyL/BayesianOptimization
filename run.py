@@ -1,4 +1,4 @@
-from problems import problem, hadamard
+from problems import hadamard
 from qutip.qip.operations import snot
 import qutip as qt
 import numpy as np

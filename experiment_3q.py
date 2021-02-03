@@ -1,4 +1,4 @@
-from problems import ThreeQubitCircuit
+from problems import threeQubitCircuit
 from qutip.qip.operations import snot
 import qutip as qt
 import numpy as np
@@ -13,7 +13,7 @@ spins = []
 for i in range(1, 4):
     globals()['spin%s' % i] = qt.basis(2,0)
     spins.append(qt.basis(2,0))
-    
+
 initial_state = tensor(spins)
 
 #initialState = qt.basis(2, 0)
@@ -22,7 +22,7 @@ transferResults = []
 controlResults = []
 
 for _ in range(20):
-    p = ThreeQubitCircuit(initial_state)
+    p = threeQubitCircuit(initial_state)
     p.default_opt()
     tResult, tCost, cResult, cCost = p.get_result()
     transferResults.append(tResult)

@@ -46,6 +46,7 @@ class problem:
             # The FullLoader parameter handles the conversion from YAML
             # scalar values to Python the dictionary format
             self.config = yaml.load(file, Loader=yaml.FullLoader)
+        print(self.config["pbounds"])
 
         # Primary State Optimizer is the first in the list
         # Data will be transfered from this optimizer 
@@ -133,9 +134,9 @@ class problem:
     def plot_gps(self, stateIndex=0, stateTitle='State', transferTitle='Gate',
                 controlTitle='Control', show=True, save=False, saveFile='./figures/'):
 
-        plot_bo(self.StateOptimizer_list[stateIndex], stateTitle, save=save, saveDir=saveDir)
-        plot_bo(self.TransferOptimizer, transferTitle, save=save, saveDir=saveDir)
-        plot_bo(self.ControlOptimizer, controlTitle, save=save, saveDir=saveDir)
+        plot_bo(self.StateOptimizer_list[stateIndex], stateTitle, save=save, saveFile=saveFile)
+        plot_bo(self.TransferOptimizer, transferTitle, save=save, saveFile=saveFile)
+        plot_bo(self.ControlOptimizer, controlTitle, save=save, saveFile=saveFile)
         if show:
             plt.show()
 

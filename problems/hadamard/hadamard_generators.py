@@ -3,6 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
 
+from qutip.qip.circuit import QubitCircuit, Gate
+from qutip.qip.operations import gate_sequence_product
+from qutip.tensor import tensor
+
 
 def calcStateFidelity(finalState, targetState):
     finalState = finalState.dag()

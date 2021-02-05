@@ -3,14 +3,13 @@ from .three_q_generators import *
 from qutip.qip.operations import snot
 import qutip as qt
 
-from qutip.qip.circuit import QubitCircuit, Gate
+from qutip.qip.circuit import QubitCircuit
 from qutip.qip.operations import gate_sequence_product
 from qutip.tensor import tensor
 
 spins = []
 
 for i in range(1, 4):
-    globals()['spin%s' % i] = qt.basis(2,0)
     spins.append(qt.basis(2,0))
 
 initial_state = tensor(spins)
@@ -30,8 +29,8 @@ TargetGate = gate_sequence_product(U_list)
 TargetState = TargetGate * initial_state
 
 class threeQubitCircuit(problem):
-    def __init__(self, initialState = initial_state, targetGate = TargetGate, configPath='./problems/three_qubits/three_q_config.yaml', verbose=2):
-        targetState = targetGate * initialState
-        testState_list = [N3qubitStateFunc(initialState, targetState)]
+    def __init__(self, initialState_list=[initial_state], targetGate=TargetGate, configPath='./problems/three_qubits/three_q_config.yaml', verbose=2):
+        targetState_list = [targetGate * initialState for initialState in initialState_list]
+        testState_list = [N3qubitStateFunc(initialState_list[i], targetState_list[i]) for i in range(len(initialState_list))]
         testGate = N3qubitGateFunc(targetGate)
         problem.__init__(self, testState_list=testState_list, testGate=testGate, configPath=configPath, verbose=verbose)

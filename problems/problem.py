@@ -50,30 +50,37 @@ class problem:
 
         # Primary State Optimizer is the first in the list
         # Data will be transfered from this optimizer
-        self.StateOptimizer_list = [BayesianOptimization(
-            f=testState,
-            pbounds=self.config['pbounds'],
-            verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
-            cost=self.config['cost']['state'],
-            random_state=1,
-        ) for testState in testState_list]
-
-        self.TransferOptimizer = TargetBayesianOptimization(
-            f=testGate,
-            pbounds=self.config['pbounds'],
-            verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
-            source_bo_list=self.StateOptimizer_list,
-            cost=self.config['cost']['gate'],
-            random_state=1,
-        )
-
-        self.ControlOptimizer = BayesianOptimization(
-            f=testGate,
-            pbounds=self.config['pbounds'],
-            verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
-            cost=self.config['cost']['gate'],
-            random_state=1,
-        )
+        if 'state' in self.config.keys():
+            self.StateOptimizer_list = [BayesianOptimization(
+                f=testState,
+                pbounds=self.config['pbounds'],
+                verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
+                cost=self.config['cost']['state'],
+                random_state=1,
+            ) for testState in testState_list]
+        else:
+            self.StateOptimizer_list = []
+        if 'transfer' and 'state' in self.config.keys():
+            self.TransferOptimizer = TargetBayesianOptimization(
+                f=testGate,
+                pbounds=self.config['pbounds'],
+                verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
+                source_bo_list=self.StateOptimizer_list,
+                cost=self.config['cost']['gate'],
+                random_state=1,
+            )
+        else:
+            self.TransferOptimizer = None
+        if 'control' in self.config.keys():
+            self.ControlOptimizer = BayesianOptimization(
+                f=testGate,
+                pbounds=self.config['pbounds'],
+                verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
+                cost=self.config['cost']['gate'],
+                random_state=1,
+            )
+        else:
+            self.ControlOptimizer = None
 
     def default_opt(self):
         pbounds = self.config['pbounds']
@@ -88,11 +95,14 @@ class problem:
             for p in params:
                 newPoint[p] = initPoints[j][i]
                 j += 1
-            for k in range(len(self.testState_list)):
-                stateTarget = self.testState_list[k](**newPoint)
-                self.StateOptimizer_list[k].register(newPoint, stateTarget)
             gateTarget = self.testGate(**newPoint)
-            self.ControlOptimizer.register(newPoint, gateTarget)
+            if self.StateOptimizer_list != []:
+                for k in range(len(self.testState_list)):
+                    stateTarget = self.testState_list[k](**newPoint)
+                    self.StateOptimizer_list[k].register(newPoint, stateTarget)
+
+            if self.ControlOptimizer != None:
+                self.ControlOptimizer.register(newPoint, gateTarget)
 
         for StateOptimizer in self.StateOptimizer_list:
             for optimization in self.config['state'].values():
@@ -107,83 +117,99 @@ class problem:
                     kappa_decay=optimization['kappa-decay'],
                     kappa_decay_delay=optimization['decay-delay'],
                 )
+        if self.TransferOptimizer != None:
+            self.TransferOptimizer.transferData(self.StateOptimizer_list)
+            transferInit = self.config['transfer-init']
+            for _ in range(transferInit['iters']):
+                stateIndex = np.random.randint(0, len(self.testState_list), 1)[0]
+                util = UtilityFunction(transferInit['acq'], kappa=transferInit['kappa'], xi=transferInit['xi'])
+                newPoint = self.StateOptimizer_list[stateIndex].suggest(util)
+                target = self.testGate(**newPoint)
+                self.TransferOptimizer.register(newPoint, target)
 
-        self.TransferOptimizer.transferData(self.StateOptimizer_list[0])
-        transferInit = self.config['transfer-init']
-        for _ in range(transferInit['iters']):
-            stateIndex = np.random.randint(0, len(self.testState_list), 1)[0]
-            util = UtilityFunction(transferInit['acq'], kappa=transferInit['kappa'], xi=transferInit['xi'])
-            newPoint = self.StateOptimizer_list[stateIndex].suggest(util)
-            target = self.testGate(**newPoint)
-            self.TransferOptimizer.register(newPoint, target)
+            for optimization in self.config['transfer'].values():
+                if 'refine' in optimization.keys():
+                    new_bounds = self.TransferOptimizer.get_new_bounds(optimization['refine'])
+                    self.TransferOptimizer.set_bounds(new_bounds)
+                self.TransferOptimizer.maximize(
+                    init_points=0,
+                    n_iter=optimization['iters'],
+                    acq=optimization['acq'],
+                    kappa=optimization['kappa'],
+                    kappa_decay=optimization['kappa-decay'],
+                    kappa_decay_delay=optimization['decay-delay'],
+                )
 
-        for optimization in self.config['transfer'].values():
-            if 'refine' in optimization.keys():
-                new_bounds = self.TransferOptimizer.get_new_bounds(optimization['refine'])
-                self.TransferOptimizer.set_bounds(new_bounds)
-            self.TransferOptimizer.maximize(
-                init_points=0,
-                n_iter=optimization['iters'],
-                acq=optimization['acq'],
-                kappa=optimization['kappa'],
-                kappa_decay=optimization['kappa-decay'],
-                kappa_decay_delay=optimization['decay-delay'],
-            )
-
-        for optimization in self.config['control'].values():
-            if 'refine' in optimization.keys():
-                new_bounds = self.ControlOptimizer.get_new_bounds(optimization['refine'])
-                self.ControlOptimizer.set_bounds(new_bounds)
-            self.ControlOptimizer.maximize(
-                init_points=0,
-                n_iter=optimization['iters'],
-                acq=optimization['acq'],
-                kappa=optimization['kappa'],
-                kappa_decay=optimization['kappa-decay'],
-                kappa_decay_delay=optimization['decay-delay'],
-            )
+        if self.ControlOptimizer != None:
+            for optimization in self.config['control'].values():
+                if 'refine' in optimization.keys():
+                    new_bounds = self.ControlOptimizer.get_new_bounds(optimization['refine'])
+                    self.ControlOptimizer.set_bounds(new_bounds)
+                self.ControlOptimizer.maximize(
+                    init_points=0,
+                    n_iter=optimization['iters'],
+                    acq=optimization['acq'],
+                    kappa=optimization['kappa'],
+                    kappa_decay=optimization['kappa-decay'],
+                    kappa_decay_delay=optimization['decay-delay'],
+                )
 
     def plot_gps(self, stateIndex=0, stateTitle='State', transferTitle='Gate',
                 controlTitle='Control', show=True, save=False, saveFile='./figures/'):
 
-        plot_bo(self.StateOptimizer_list[stateIndex], stateTitle, save=save, saveFile=saveFile)
-        plot_bo(self.TransferOptimizer, transferTitle, save=save, saveFile=saveFile)
-        plot_bo(self.ControlOptimizer, controlTitle, save=save, saveFile=saveFile)
+        if len(self.StateOptimizer_list) > 0:
+            plot_bo(self.StateOptimizer_list[stateIndex], stateTitle, save=save, saveFile=saveFile)
+        if self.TransferOptimizer != None:
+            plot_bo(self.TransferOptimizer, transferTitle, save=save, saveFile=saveFile)
+        if self.ControlOptimizer != None:
+            plot_bo(self.ControlOptimizer, controlTitle, save=save, saveFile=saveFile)
         if show:
             plt.show()
 
     def get_result(self, format_func=fid_to_infidelity):
-        transferResult = deepcopy(self.TransferOptimizer.data.bestResult)
-        transferCosts = deepcopy(self.TransferOptimizer.data.cost)
-        controlResult = deepcopy(self.ControlOptimizer.data.bestResult)
-        controlCosts = deepcopy(self.ControlOptimizer.data.cost)
+        if self.TransferOptimizer != None:
+            transferResult = deepcopy(self.TransferOptimizer.data.bestResult)
+            transferCosts = deepcopy(self.TransferOptimizer.data.cost)
+            for i in range(len(transferResult)):
+                transferResult[i] = format_func(transferResult[i])
+        else:
+            transferResult = None
+            transferCosts = None
 
-        for i in range(len(transferResult)):
-            transferResult[i] = format_func(transferResult[i])
-        for i in range(len(controlResult)):
-            controlResult[i] = format_func(controlResult[i])
+        if self.ControlOptimizer != None:
+            controlResult = deepcopy(self.ControlOptimizer.data.bestResult)
+            controlCosts = deepcopy(self.ControlOptimizer.data.cost)
+            for i in range(len(controlResult)):
+                controlResult[i] = format_func(controlResult[i])
+        else:
+            controlResult = None
+            controlCosts = None
 
         return transferResult, transferCosts, controlResult, controlCosts
 
 
     def plot_result(self, title='', show=True, save=False, saveFile='./figures/infidelity'):
         cost = self.config['cost']
-        totalStateIters = self.config['state-control-init']
-        for optimization in self.config['state'].values():
-            totalStateIters += optimization['iters']
-        transferPoint = totalStateIters * cost['state']
+        if self.StateOptimizer_list != []:
+            totalStateIters = self.config['state-control-init']
+            for optimization in self.config['state'].values():
+                totalStateIters += optimization['iters']
+        if self.TransferOptimizer != None:
+            transferPoint = totalStateIters * cost['state'] * len(self.StateOptimizer_list)
 
         transferResult, transferCosts, controlResult, controlCosts = self.get_result()
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.plot(transferCosts, transferResult, label='With Transfer', color='b')
-        ax.plot(controlCosts, controlResult, label='No Transfer', color='r')
+        if transferCosts != None:
+            ax.plot(transferCosts, transferResult, label='With Transfer', color='b')
+            ax.axvline(x=transferPoint, color='g', linestyle='--', label='Transfer Point')
+        if controlCosts != None:
+            ax.plot(controlCosts, controlResult, label='No Transfer', color='r')
         ax.set_xlabel('Cost')
         ax.set_ylabel('Best Infidelity')
         ax.grid('--')
         ax.set_yscale('log')
-        ax.axvline(x=transferPoint, color='g', linestyle='--', label='Transfer Point')
         fig.legend()
         if save:
             plt.savefig(saveFile)

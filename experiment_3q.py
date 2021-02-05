@@ -8,26 +8,33 @@ from qutip.qip.circuit import QubitCircuit, Gate
 from qutip.qip.operations import gate_sequence_product
 from qutip.tensor import tensor
 
-spins = []
+spins_0 = []
+spins_1 = []
 
 for i in range(1, 4):
-    globals()['spin%s' % i] = qt.basis(2,0)
-    spins.append(qt.basis(2,0))
+    spins_0.append(qt.basis(2,0))
+    spins_1.append(qt.basis(2,1))
 
-initial_state = tensor(spins)
+state_0 = tensor(spins_0)
+state_1 = tensor(spins_1)
+initial_state_list = [state_0]
+
 
 #initialState = qt.basis(2, 0)
 
 transferResults = []
 controlResults = []
 
-for _ in range(20):
-    p = threeQubitCircuit(initial_state)
+for _ in range(1):
+    p = threeQubitCircuit(initialState_list=initial_state_list)
     p.default_opt()
+    p.plot_result()
     tResult, tCost, cResult, cCost = p.get_result()
     transferResults.append(tResult)
     controlResults.append(cResult)
+    print("Transfer:", p.TransferOptimizer.max['params'])
     print("Transfer: ", tResult[-1])
+    print("Control:", p.ControlOptimizer.max['params'])
     print("Control: ", cResult[-1])
 
 resultsToPickle = {

@@ -407,7 +407,9 @@ class TargetBayesianOptimization(BayesianOptimization):
 
         self.dispatch(Events.OPTIMIZATION_END)
 
-    def transferData(self, other):
-        self.data = other.data
+    def transferData(self, other_list):
+        self.data = other_list[0].data
+        for i in range(len(self.data.cost)):
+            self.data.cost[i] *= len(other_list)
         for i in range(len(self.data.bestResult)):
             self.data.bestResult[i] = self._space.target_func(**(self.data.bestPoints[i]))

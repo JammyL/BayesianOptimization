@@ -21,6 +21,12 @@ transfer:
 # These values must be the same for state and contorl to keep the testing fair
 state-control-init: 30
 
+transfer-init:
+    iters: 10
+    acq: 'ucb'
+    kappa: 1
+    xi: 0.0
+
 cost:
   state: 1
   gate: 10

@@ -13,19 +13,23 @@ else:
     outputPath = args[1]
 
 controlResults = []
+transferResults = []
 
 for _ in range(1000):
     p = threeQubitCircuit(configPath=configPath)
     p.default_opt()
     tResult, tCost, cResult, cCost = p.get_result()
-    controlResults.append(cResult)
-    print("Control:", p.ControlOptimizer.max['params'])
-    print("Control: ", cResult[-1])
+    if p.ControlOptimizer != None:
+        controlResults.append(cResult)
+    if p.TransferOptimizer != None:
+        transferResults.append(tResults)
 
 resultsToPickle = {
     'config': p.config,
     'control': np.array(controlResults),
     'control_cost': cCost,
+    'transfer': np.array(transferResults),
+    'transfer_cost': tCost,
 }
 
 pickle.dump( resultsToPickle, open( outputPath, "wb" ) )

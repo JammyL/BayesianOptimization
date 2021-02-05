@@ -1,29 +1,31 @@
-from problems import hadamard
-from qutip.qip.operations import snot
+from problems import threeQubitCircuit
 import qutip as qt
 import numpy as np
 import pickle
+import sys
 
-initialState = qt.basis(2, 0)
+args = sys.argv[1:]
+if len(args) < 2:
+    configPath = './configs/three_q/delay/config_1.yaml'
+    outputPath = 'results_10.pickle'
+else:
+    configPath = args[0]
+    outputPath = args[1]
 
-transferResults = []
 controlResults = []
 
-for _ in range(1):
-    p = hadamard(initialState)
+for _ in range(1000):
+    p = threeQubitCircuit(configPath=configPath)
     p.default_opt()
-    p.plot_result()
     tResult, tCost, cResult, cCost = p.get_result()
-    transferResults.append(tResult)
     controlResults.append(cResult)
-    print("Transfer: ", tResult[-1])
+    print("Control:", p.ControlOptimizer.max['params'])
     print("Control: ", cResult[-1])
 
 resultsToPickle = {
-    'transfer': np.array(transferResults),
-    'transfer_cost': tCost,
+    'config': p.config,
     'control': np.array(controlResults),
     'control_cost': cCost,
 }
 
-pickle.dump( resultsToPickle, open( "test_2.pickle", "wb" ) )
+pickle.dump( resultsToPickle, open( outputPath, "wb" ) )

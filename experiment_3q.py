@@ -1,5 +1,4 @@
 from problems import threeQubitCircuit
-from qutip.qip.operations import snot
 import qutip as qt
 import numpy as np
 import pickle
@@ -19,14 +18,11 @@ state_0 = tensor(spins_0)
 state_1 = tensor(spins_1)
 initial_state_list = [state_0]
 
-
-#initialState = qt.basis(2, 0)
-
 transferResults = []
 controlResults = []
 
 for _ in range(1):
-    p = threeQubitCircuit(initialState_list=initial_state_list)
+    p = threeQubitCircuit(initialState_list=initial_state_list, configPath='./configs/three_q/delay/config_2.yaml')
     p.default_opt()
     p.plot_result()
     tResult, tCost, cResult, cCost = p.get_result()
@@ -43,4 +39,4 @@ resultsToPickle = {
     'control': np.array(controlResults),
     'control_cost': cCost,
 }
-pickle.dump( resultsToPickle, open( "test.pickle", "wb" ) )
+# pickle.dump( resultsToPickle, open( "test.pickle", "wb" ) )

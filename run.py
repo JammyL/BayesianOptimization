@@ -6,7 +6,7 @@ import sys
 
 args = sys.argv[1:]
 if len(args) < 2:
-    configPath = './configs/three_q/delay/config_1.yaml'
+    configPath = './configs/three_q/bad_path/config_1.yaml'
     outputPath = 'results_10.pickle'
 else:
     configPath = args[0]
@@ -22,7 +22,7 @@ for _ in range(1000):
     if p.ControlOptimizer != None:
         controlResults.append(cResult)
     if p.TransferOptimizer != None:
-        transferResults.append(tResults)
+        transferResults.append(tResult)
 
 resultsToPickle = {
     'config': p.config,

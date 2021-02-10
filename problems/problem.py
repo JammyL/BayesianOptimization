@@ -2,7 +2,7 @@ import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
-from bayes_opt import BayesianOptimization, TargetBayesianOptimization, UtilityFunction
+from bayes_opt import BayesianOptimization, TargetBayesianOptimization, UtilityFunction, SequentialDomainReductionTransformer
 
 def plot_bo(bo, title='', save=False, saveFile='./figures/'):
     #ONLY FOR USE WITH 2D PARAMETER SPACES
@@ -47,6 +47,10 @@ class problem:
             # The FullLoader parameter handles the conversion from YAML
             # scalar values to Python the dictionary format
             self.config = yaml.load(file, Loader=yaml.FullLoader)
+        gamma = self.config['domainreduction']['gamma']
+        panning = self.config['domainreduction']['panning']
+        zoom = self.config['domainreduction']['zoom']
+        self.boundsTransformer = SequentialDomainReductionTransformer(gamma, panning, zoom)
 
         # Primary State Optimizer is the first in the list
         # Data will be transfered from this optimizer
@@ -68,6 +72,7 @@ class problem:
                 source_bo_list=self.StateOptimizer_list,
                 cost=self.config['cost']['gate'],
                 random_state=1,
+                bounds_transformer= self.boundsTransformer
             )
         else:
             self.TransferOptimizer = None
@@ -78,6 +83,7 @@ class problem:
                 verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
                 cost=self.config['cost']['gate'],
                 random_state=1,
+                bounds_transformer= self.boundsTransformer
             )
         else:
             self.ControlOptimizer = None

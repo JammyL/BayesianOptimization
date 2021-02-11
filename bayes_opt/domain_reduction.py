@@ -105,6 +105,7 @@ class SequentialDomainReductionTransformer(DomainTransformer):
                 self.current_optimal + 0.5 * self.r
             ]
         ).T
+        new_bounds = np.sort(new_bounds)
 
         self._trim(new_bounds, self.original_bounds)
         self.bounds.append(new_bounds)

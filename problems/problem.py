@@ -61,6 +61,7 @@ class problem:
                 verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
                 cost=self.config['cost']['state'],
                 random_state=1,
+                #bounds_transformer= self.boundsTransformer
             ) for testState in testState_list]
         else:
             self.StateOptimizer_list = []

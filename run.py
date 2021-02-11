@@ -1,4 +1,4 @@
-from problems import threeQubitCircuit
+from problems import threeQubitCircuit, twoQubitCircuit
 import qutip as qt
 import numpy as np
 import pickle
@@ -6,8 +6,8 @@ import sys
 
 args = sys.argv[1:]
 if len(args) < 2:
-    configPath = './configs/three_q/bad_path/config_1.yaml'
-    outputPath = 'results_10.pickle'
+    configPath = './configs/two_q/zoom/config_1.yaml'
+    outputPath = 'results_zoom1.pickle'
 else:
     configPath = args[0]
     outputPath = args[1]
@@ -16,7 +16,7 @@ controlResults = []
 transferResults = []
 
 for _ in range(1000):
-    p = threeQubitCircuit(configPath=configPath)
+    p = twoQubitCircuit(configPath=configPath)
     p.default_opt()
     tResult, tCost, cResult, cCost = p.get_result()
     if p.ControlOptimizer != None:

@@ -1,4 +1,4 @@
-from problems import threeQubitCircuit
+from problems import hadamard
 import qutip as qt
 import numpy as np
 import pickle

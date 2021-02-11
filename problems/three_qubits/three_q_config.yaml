@@ -29,7 +29,16 @@ control:
     acq: 'ucb'
     kappa: 1
     kappa-decay: 0.5
-    decay-delay: 5
+    decay-delay: 10
+  opt-2:
+    iters: 60
+    acq: 'ucb'
+    kappa: 1
+    kappa-decay: 0.5
+    decay-delay: 10
+    refine:
+      threshold: 0.8
+      increment: 0.0001
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
@@ -44,18 +53,43 @@ transfer-init:
 
 cost:
   state: 1
-  gate: 28
+  gate: 10
+
+order:
+  stage-1:
+    optimizer: state
+    config:
+      - opt-1
+  stage-2:
+    optimizer: transfer-init
+  stage-3:
+    optimizer: transfer
+    config:
+      - opt-1
+  stage-4:
+    optimizer: state
+    config:
+      - opt-2
+  stage-5:
+    optimizer: transfer
+    config:
+      - opt-2
+  stage-6:
+    optimizer: control
+    config:
+      - opt-1
+      - opt-2
 
 pbounds:
   a1:
-    !!python/tuple [-2, 2]
+    !!python/tuple [0, 2]
   a2:
-    !!python/tuple [-2, 2]
+    !!python/tuple [0, 0.5]
   a3:
-    !!python/tuple [-2, 2]
+    !!python/tuple [0, 2]
   a4:
-    !!python/tuple [-2, 2]
+    !!python/tuple [0, 2]
   a5:
-    !!python/tuple [-2, 2]
+    !!python/tuple [0, 2]
   a6:
-    !!python/tuple [-2, 2]
+    !!python/tuple [0, 1]

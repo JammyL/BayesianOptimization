@@ -1,4 +1,5 @@
 import warnings
+import numpy as np
 
 from .target_space import TargetSpace
 from .event import Events, DEFAULT_EVENTS
@@ -317,12 +318,22 @@ class BayesianOptimization(Observable):
         """Set parameters to the internal Gaussian Process Regressor"""
         self._gp.set_params(**params)
 
-    def get_new_bounds(self, new_size):
+    def get_new_bounds(self, threshold, increment):
+        if self.max['target'] < threshold:
+            return None
         new_bounds = {}
+        i = 0
         for coord in self.max['params']:
-            new_bounds[coord] = (self.max['params'][coord] - new_size, self.max['params'][coord] + new_size)
+            min_coord = self.max['params']
+            while self._gp.predict([list(min_coord.values())]) > threshold and min_coord[coord] > self._space.bounds[i][0]:
+                min_coord[coord] -= increment
+            max_coord = self.max['params']
+            while self._gp.predict([list(max_coord.values())]) > threshold and max_coord[coord] < self._space.bounds[i][1]:
+                max_coord[coord] += increment
+            new_bounds[coord] = (min_coord[coord], max_coord[coord])
+            i += 1
+        print("New bounds: ", new_bounds)
         return new_bounds
-
 
 
 class TargetBayesianOptimization(BayesianOptimization):

@@ -51,10 +51,11 @@ class problem:
         # Primary State Optimizer is the first in the list
         # Data will be transfered from this optimizer
         if 'state' in self.config.keys():
-            self.StateOptimizer_list = [BayesianOptimization(
+            self.StateOptimizer_list = [TargetBayesianOptimization(
                 f=testState,
                 pbounds=self.config['pbounds'],
                 verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
+                source_bo_list=[],
                 cost=self.config['cost']['state'],
                 random_state=1,
             ) for testState in testState_list]
@@ -69,6 +70,8 @@ class problem:
                 cost=self.config['cost']['gate'],
                 random_state=1,
             )
+            for stateOptimizer in self.StateOptimizer_list:
+                stateOptimizer.source_bo_list.append(self.TransferOptimizer)
         else:
             self.TransferOptimizer = None
         if 'control' in self.config.keys():
@@ -82,18 +85,18 @@ class problem:
         else:
             self.ControlOptimizer = None
 
-    def default_opt(self):
+    def register_init_points(self):
         pbounds = self.config['pbounds']
         params = pbounds.keys()
-        initPoints = []
+        self.initPoints = []
         for p in params:
-            initPoints.append(np.random.uniform(low=pbounds[p][0], high=pbounds[p][1], size=self.config['state-control-init']))
+            self.initPoints.append(np.random.uniform(low=pbounds[p][0], high=pbounds[p][1], size=self.config['state-control-init']))
 
-        for i in range(len(initPoints)):
+        for i in range(len(self.initPoints)):
             newPoint = {}
             j = 0
             for p in params:
-                newPoint[p] = initPoints[j][i]
+                newPoint[p] = self.initPoints[j][i]
                 j += 1
             gateTarget = self.testGate(**newPoint)
             if self.StateOptimizer_list != []:
@@ -104,10 +107,14 @@ class problem:
             if self.ControlOptimizer != None:
                 self.ControlOptimizer.register(newPoint, gateTarget)
 
+    def default_opt(self):
+        self.register_init_points()
+
         for StateOptimizer in self.StateOptimizer_list:
             for optimization in self.config['state'].values():
                 if 'refine' in optimization.keys():
-                    new_bounds = StateOptimizer.get_new_bounds(optimization['refine'])
+                    new_bounds = self.StateOptimizer.get_new_bounds(optimization['refine']['threshold'],
+                                                                        optimization['refine']['increment'])
                     StateOptimizer.set_bounds(new_bounds)
                 StateOptimizer.maximize(
                     init_points=0,
@@ -129,7 +136,8 @@ class problem:
 
             for optimization in self.config['transfer'].values():
                 if 'refine' in optimization.keys():
-                    new_bounds = self.TransferOptimizer.get_new_bounds(optimization['refine'])
+                    new_bounds = self.TransferOptimizer.get_new_bounds(optimization['refine']['threshold'],
+                                                                        optimization['refine']['increment'])
                     self.TransferOptimizer.set_bounds(new_bounds)
                 self.TransferOptimizer.maximize(
                     init_points=0,
@@ -143,7 +151,9 @@ class problem:
         if self.ControlOptimizer != None:
             for optimization in self.config['control'].values():
                 if 'refine' in optimization.keys():
-                    new_bounds = self.ControlOptimizer.get_new_bounds(optimization['refine'])
+                    new_bounds = self.ControlOptimizer.get_new_bounds(optimization['refine']['threshold'],
+                                                                        optimization['refine']['increment'])
+
                     self.ControlOptimizer.set_bounds(new_bounds)
                 self.ControlOptimizer.maximize(
                     init_points=0,
@@ -154,15 +164,60 @@ class problem:
                     kappa_decay_delay=optimization['decay-delay'],
                 )
 
+    def optimize(self):
+        self.register_init_points()
+        if 'order' not in self.config.keys():
+            print("order not specified, using default_opt() instead")
+            self.default_opt()
+            return
+        for stage in self.config['order'].values():
+            if stage['optimizer'] == 'state':
+                optimizer_list = self.StateOptimizer_list
+            elif stage['optimizer'] == 'transfer':
+                optimizer_list = [self.TransferOptimizer]
+            elif stage['optimizer'] == 'control':
+                optimizer_list = [self.ControlOptimizer]
+            elif stage['optimizer'] == 'transfer-init':
+                self.TransferOptimizer.transferData(self.StateOptimizer_list)
+                transferInit = self.config['transfer-init']
+                for _ in range(transferInit['iters']):
+                    stateIndex = np.random.randint(0, len(self.testState_list), 1)[0]
+                    util = UtilityFunction(transferInit['acq'], kappa=transferInit['kappa'], xi=transferInit['xi'])
+                    newPoint = self.StateOptimizer_list[stateIndex].suggest(util)
+                    target = self.testGate(**newPoint)
+                    self.TransferOptimizer.register(newPoint, target)
+                continue
+            else:
+                err = "The optimizer" \
+                    "{} has not been implemented, " \
+                    "please choose one of 'state', 'transfer, 'control', 'transfer-init'.".format(stage['optimizer'])
+                raise NotImplementedError(err)
+            for stage_config in stage['config']:
+                optimization = self.config[stage['optimizer']][stage_config]
+                for optimizer in optimizer_list:
+                    if 'refine' in optimization.keys():
+                        refine_params = optimization['refine']
+                        new_bounds = optimizer.get_new_bounds(refine_params['threshold'], refine_params['increment'])
+                        optimizer.set_bounds(new_bounds)
+                    optimizer.maximize(
+                        init_points=0,
+                        n_iter=optimization['iters'],
+                        acq=optimization['acq'],
+                        kappa=optimization['kappa'],
+                        kappa_decay=optimization['kappa-decay'],
+                        kappa_decay_delay=optimization['decay-delay'],
+                    )
+
     def plot_gps(self, stateIndex=0, stateTitle='State', transferTitle='Gate',
                 controlTitle='Control', show=True, save=False, saveFile='./figures/'):
 
+        pbounds = list(self.config['pbounds'].values())
         if len(self.StateOptimizer_list) > 0:
-            plot_bo(self.StateOptimizer_list[stateIndex], stateTitle, save=save, saveFile=saveFile)
+            plot_bo(self.StateOptimizer_list[stateIndex], pbounds, stateTitle, save=save, saveFile=saveFile)
         if self.TransferOptimizer != None:
-            plot_bo(self.TransferOptimizer, transferTitle, save=save, saveFile=saveFile)
+            plot_bo(self.TransferOptimizer, pbounds, transferTitle, save=save, saveFile=saveFile)
         if self.ControlOptimizer != None:
-            plot_bo(self.ControlOptimizer, controlTitle, save=save, saveFile=saveFile)
+            plot_bo(self.ControlOptimizer, pbounds, controlTitle, save=save, saveFile=saveFile)
         if show:
             plt.show()
 

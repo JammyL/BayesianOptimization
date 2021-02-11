@@ -147,15 +147,17 @@ class MultiUtilityFunction(UtilityFunction):
 
         self._iters_counter = 0
 
-        if kind not in ['alternate', 'multi_ucb', 'ucb', 'ei', 'poi']:
+        if kind not in ['alternate', 'multi_ucb', 'ucb', 'ei', 'poi', 'majority_vote']:
             err = "The utility function " \
                   "{} has not been implemented, " \
-                  "please choose one of 'multi_ucb'.".format(kind)
+                  "please choose one of 'multi_ucb, ucb, ei, poi'.".format(kind)
             raise NotImplementedError(err)
         else:
             self.kind = kind
 
     def utility(self, x, gp, y_max):
+        if self.kind == 'majority_vote':
+            return self._majority_vote(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa)
         if self.kind == 'alternate':
             return self._alternate_multi(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa)
         if self.kind == 'multi_ucb':
@@ -166,6 +168,15 @@ class MultiUtilityFunction(UtilityFunction):
             return self._ei(x, gp, y_max, self.xi)
         if self.kind == 'poi':
             return self._poi(x, gp, y_max, self.xi)
+
+    @staticmethod
+    def _majority_vote(x, target_gp, source_gp_list, kappa):
+        target_mean, target_std = target_gp.predict(x, return_std=True)
+        source_mean_sum = 0
+        for source_gp in source_gp_list:
+            source_mean_sum = source_gp.predict(x, return_std=False)
+        source_mean_avg = source_mean_sum / len(source_gp_list)
+        return target_mean + source_mean_avg
 
     @staticmethod
     def _multi_ucb(x, target_gp, source_gp_list, kappa):

@@ -4,11 +4,10 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 from bayes_opt import BayesianOptimization, TargetBayesianOptimization, UtilityFunction
 
-def plot_bo(bo, title='', save=False, saveFile='./figures/'):
+def plot_bo(bo, pbounds, title='', save=False, saveFile='./figures/'):
     #ONLY FOR USE WITH 2D PARAMETER SPACES
     #i.e f(x,y)
-
-    X, Y = np.mgrid[0:2:1000j, -2:2:1000j]
+    X, Y = np.mgrid[pbounds[0][0]:pbounds[0][1]:1000j, pbounds[1][0]:pbounds[1][1]:1000j]
     positions = np.vstack([X.ravel(), Y.ravel()]).T
     mean, sigma = bo._gp.predict(positions, return_std=True)
     mean = np.reshape(mean, (-1,1000))

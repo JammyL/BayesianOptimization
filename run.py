@@ -7,7 +7,7 @@ import sys
 
 args = sys.argv[1:]
 if len(args) < 3:
-    configPath = './configs/three_q/bad_path/config_1.yaml'
+    configPath = './problems/three_qubits/three_q_config.yaml'
     outputPath = 'results_10.pickle'
     numberStates = 1
 else:

@@ -1,9 +1,10 @@
-from problems import threeQubitCircuit
+from problems import hadamard, threeQubitCircuit
 from qutip.tensor import tensor
 import qutip as qt
 import numpy as np
 import pickle
 import sys
+import yaml
 
 args = sys.argv[1:]
 if len(args) < 3:

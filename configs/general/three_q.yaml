@@ -13,26 +13,26 @@ state:
 
 transfer:
   opt-1:
-    iters: 170
+    iters: 150
     acq: 'multi_ucb'
-    kappa: 1000
+    kappa: 100
     kappa-decay: 1
     decay-delay: 0
 
 control:
   opt-1:
-    iters: 200
+    iters: 160
     acq: 'ucb'
     kappa: 1
     kappa-decay: 0.8
-    decay-delay: 100
+    decay-delay: 80
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
 state-control-init: 30
 
 transfer-init:
-    iters: 10
+    iters: 5
     acq: 'ucb'
     kappa: 1
     xi: 0.0
@@ -45,7 +45,7 @@ pbounds:
   a1:
     !!python/tuple [0, 2]
   a2:
-    !!python/tuple [0, 2]
+    !!python/tuple [0, 0.5]
   a3:
     !!python/tuple [0, 2]
   a4:
@@ -53,4 +53,5 @@ pbounds:
   a5:
     !!python/tuple [0, 2]
   a6:
-    !!python/tuple [0, 2]
+    !!python/tuple [0, 1]
+

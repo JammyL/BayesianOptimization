@@ -22,7 +22,7 @@ QC.add_gate("CNOT", targets = 1, controls = 0)
 QC.add_gate("CNOT", targets = 2, controls = 0)
 QC.add_gate("RX", targets = 0, arg_value = 0.26127)
 QC.add_gate("RX", targets = 1, arg_value= 1.3942948)
-QC.add_gate("RX", targets = 1, arg_value= 0.4378)
+QC.add_gate("RX", targets = 2, arg_value= 0.4378)
 U_list = QC.propagators()
 
 TargetGate = gate_sequence_product(U_list)

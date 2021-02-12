@@ -26,7 +26,7 @@ def N3qubitGateFunc(targetGate):
         QC.add_gate("CNOT", targets = 2, controls = 0)
         QC.add_gate("RX", targets = 0, arg_value = a4)
         QC.add_gate("RX", targets = 1, arg_value= a5)
-        QC.add_gate("RX", targets = 1, arg_value= a6)
+        QC.add_gate("RX", targets = 2, arg_value= a6)
         U_list = QC.propagators()
         finalGate = gate_sequence_product(U_list)
         return calcGateFidelityN(finalGate, targetGate, 3)
@@ -42,7 +42,7 @@ def N3qubitStateFunc(initialState, targetState):
         QC.add_gate("CNOT", targets = 2, controls = 0)
         QC.add_gate("RX", targets = 0, arg_value = a4)
         QC.add_gate("RX", targets = 1, arg_value= a5)
-        QC.add_gate("RX", targets = 1, arg_value= a6)
+        QC.add_gate("RX", targets = 2, arg_value= a6)
         U_list = QC.propagators()
         finalGate = gate_sequence_product(U_list)
         finalState = finalGate * initialState

@@ -1,4 +1,5 @@
 from problems import hadamard, threeQubitCircuit
+from qutip.qip.operations import snot
 from qutip.tensor import tensor
 import qutip as qt
 import numpy as np
@@ -7,22 +8,12 @@ import sys
 import yaml
 
 args = sys.argv[1:]
-if len(args) < 3:
-    configPath = './configs/three_q/bad_path/config_1.yaml'
+if len(args) < 2:
+    configPath = './problems/three_qubits/three_q_config.yaml'
     outputPath = 'results_10.pickle'
-    numberStates = 1
 else:
     configPath = args[0]
     outputPath = args[1]
-    numberStates = int(args[2])
-
-initial_state_list = []
-for i in range(numberStates):
-    spins = []
-    bits = [int(x) for x in '{:03b}'.format(i)]
-    for b in bits:
-        spins.append(qt.basis(2,b))
-    initial_state_list.append(tensor(spins))
 
 with open(configPath) as file:
     # The FullLoader parameter handles the conversion from YAML
@@ -37,16 +28,31 @@ problem_dict = {
 if 'problem' in config.keys():
     problem = problem_dict[config['problem']]
 else:
-    problem = threeQubitCircuit
+    raise Exception("No problem specified in config. Please specify a problem e.g. 'problem: hadamard'")
 
-if problem == hadamard:
-    initial_state_list = [qt.basis(2,0)]
+initial_state_list = []
+input_states = config['input-states']
+
+for state in input_states:
+    qubit_list = []
+    for qubit in reversed(state):
+        if qubit == '+':
+            qubit_list.append(snot(1) * qt.basis(2,0))
+        elif qubit == '-':
+            qubit_list.append(snot(1) * qt.basis(2,1))
+        elif qubit == '0':
+            qubit_list.append(qt.basis(2,0))
+        elif qubit == '1':
+            qubit_list.append(qt.basis(2,1))
+        else:
+            raise Exception("Invalid qubit choice: %s, please choose '0', '1', '+', or '-'".format(qubit))
+    initial_state_list.append(tensor(qubit_list))
 
 controlResults = []
 transferResults = []
 
-for _ in range(200):
-    p = problem(initialState_list=initial_state_list, configPath=configPath,)
+for _ in range(1):
+    p = problem(initialState_list=initial_state_list, configPath=configPath)
     p.default_opt()
     tResult, tCost, cResult, cCost = p.get_result()
     if p.ControlOptimizer != None:

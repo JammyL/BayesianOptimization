@@ -5,7 +5,7 @@ problem: hadamard
 
 state:
   opt-1:
-    iters: 30
+    iters: 50
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1
@@ -23,7 +23,7 @@ control:
   opt-1:
     iters: 100
     acq: 'ucb'
-    kappa: 1
+    kappa: 20
     kappa-decay: 0.8
     decay-delay: 50
 
@@ -43,6 +43,6 @@ cost:
 
 pbounds:
   a1:
-    !!python/tuple [0, 2]
+    !!python/tuple [-1, 2.5]
   a2:
-    !!python/tuple [-2,2]
+    !!python/tuple [-1.7,1.7]

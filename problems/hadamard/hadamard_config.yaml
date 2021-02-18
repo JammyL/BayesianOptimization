@@ -2,6 +2,12 @@
 # All parameters must be included
 # Extra optimizations can be added as is done in "transfer:"
 # Optimizations must be given a unique name as is done in "transfer:"
+problem: hadamard
+
+input-states:
+  - '0'
+  - '+'
+
 state:
   opt-1:
     iters: 30

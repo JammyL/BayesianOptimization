@@ -43,9 +43,9 @@ cost:
 
 pbounds:
   a1:
-    !!python/tuple [0, 2]
+    !!python/tuple [0, 10]
   a2:
-    !!python/tuple [0, 0.5]
+    !!python/tuple [0, 2]
   a3:
     !!python/tuple [0, 2]
   a4:
@@ -53,5 +53,5 @@ pbounds:
   a5:
     !!python/tuple [0, 2]
   a6:
-    !!python/tuple [0, 1]
+    !!python/tuple [0, 2]
 

@@ -172,7 +172,7 @@ class MultiUtilityFunction(UtilityFunction):
         target_mean, target_std = target_gp.predict(x, return_std=True)
         source_mean_sum = 0
         for source_gp in source_gp_list:
-            source_mean_sum = source_gp.predict(x, return_std=False)
+            source_mean_sum += source_gp.predict(x, return_std=False)
         source_mean_avg = source_mean_sum / len(source_gp_list)
         return target_mean + source_mean_avg - ((source_mean_avg - target_mean) * np.exp(-(target_std * kappa)))
 
@@ -181,7 +181,7 @@ class MultiUtilityFunction(UtilityFunction):
         target_mean, target_std = target_gp.predict(x, return_std=True)
         source_mean_sum = 0
         for source_gp in source_gp_list:
-            source_mean_sum = source_gp.predict(x, return_std=False)
+            source_mean_sum += source_gp.predict(x, return_std=False)
         source_mean_avg = source_mean_sum / len(source_gp_list)
         return (kappa * target_std * target_mean) + source_mean_avg - ((source_mean_avg - target_mean) * np.exp(-(target_std * kappa)))
 

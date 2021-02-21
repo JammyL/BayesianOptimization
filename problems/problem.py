@@ -1,6 +1,7 @@
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as tck
 from copy import deepcopy
 from bayes_opt import BayesianOptimization, TargetBayesianOptimization, UtilityFunction
 
@@ -8,33 +9,50 @@ def plot_bo(bo, title='', save=False, saveFile='./figures/'):
     #ONLY FOR USE WITH 2D PARAMETER SPACES
     #i.e f(x,y)
 
-    X, Y = np.mgrid[0:2:1000j, -2:2:1000j]
+    X, Y = np.mgrid[-1:2.5:1000j, -1.7:1.7:1000j]
     positions = np.vstack([X.ravel(), Y.ravel()]).T
     mean, sigma = bo._gp.predict(positions, return_std=True)
     mean = np.reshape(mean, (-1,1000))
     sigma = np.reshape(sigma, (-1, 1000))
-    mean = 1 - mean
+    plt.rcParams.update({'font.size': 16})
+
+    # mean = 1 - mean
 
     fig1 = plt.figure()
     fig2 = plt.figure()
     ax1 = fig1.add_subplot(111)
     ax2 = fig2.add_subplot(111)
-    c1 = ax1.contourf(X,Y, mean, cmap='bwr', levels = 20)
-    c2 = ax2.contourf(X,Y, sigma, cmap='bwr', levels = 20)
+    c1 = ax1.contourf(X/np.pi,Y/np.pi, mean, cmap='bwr', levels = 20)
+    c2 = ax2.contourf(X/np.pi,Y/np.pi, sigma, cmap='bwr', levels = 20)
+    ax1.set_xlim(-1/4, 3/4)
+    ax1.set_ylim(-1/2, 1/2)
+    ax1.set_xticks([-1/4, 0, 1/4, 1/2, 3/4])
+    ax1.set_xticklabels(['-$\pi$/4', '0', '$\pi$/4', '$\pi$/2', '$3\pi$/4'])
+    ax1.set_yticks([-1/2, -1/4, 0, 1/4, 1/2])
+    ax1.set_yticklabels(['-$\pi$/2', '-$\pi$/4', '0', '$\pi$/4', '$\pi$/2'])
+
+    ax2.set_xlim(-1/4, 3/4)
+    ax2.set_ylim(-1/2, 1/2)
+    ax2.set_xticks([-1/4, 0, 1/4, 1/2, 3/4])
+    ax2.set_xticklabels(['-$\pi$/4', '0', '$\pi$/4', '$\pi$/2', '$3\pi$/4'])
+    ax2.set_yticks([-1/2, -1/4, 0, 1/4, 1/2])
+    ax2.set_yticklabels(['-$\pi$/2', '-$\pi$/4', '0', '$\pi$/4', '$\pi$/2'])
+
+
     plt.colorbar(c1, ax = ax1)
     plt.colorbar(c2, ax = ax2)
 
-    ax1.set_xlabel('a1')
-    ax1.set_ylabel('a2')
-    ax2.set_xlabel('a1')
-    ax2.set_ylabel('a2')
+    ax1.set_xlabel('$\phi_1$')
+    ax1.set_ylabel('$\phi_2$')
+    ax2.set_xlabel('$\phi_1$')
+    ax2.set_ylabel('$\phi_2$')
 
     ax1.set_title(title + ': Mean')
-    ax2.set_title(title + ': Sigma')
+    ax2.set_title(title + ': Uncertainty')
 
     if save:
-        fig1.savefig(saveFile + title + "_mean.png")
-        fig2.savefig(saveFile + title + "_sigma.png")
+        fig1.savefig(saveFile + title + "_mean.png", bbox_inches='tight', pad_inches=0.1)
+        fig2.savefig(saveFile + title + "_sigma.png", bbox_inches='tight', pad_inches=0.1)
 
 def fid_to_infidelity(data):
     return 1 - data
@@ -154,10 +172,13 @@ class problem:
                     kappa_decay_delay=optimization['decay-delay'],
                 )
 
-    def plot_gps(self, stateIndex=0, stateTitle='State', transferTitle='Gate',
-                controlTitle='Control', show=True, save=False, saveFile='./figures/'):
+    def plot_gps(self, stateIndex='all', stateTitle='State', transferTitle='Gate - Transfer',
+                controlTitle='Gate - Standard', show=True, save=False, saveFile='./figures/'):
 
-        if len(self.StateOptimizer_list) > 0:
+        if stateIndex == 'all':
+            for i in range(len(self.StateOptimizer_list)):
+                plot_bo(self.StateOptimizer_list[i], stateTitle, save=save, saveFile=saveFile)
+        elif len(self.StateOptimizer_list) > 0:
             plot_bo(self.StateOptimizer_list[stateIndex], stateTitle, save=save, saveFile=saveFile)
         if self.TransferOptimizer != None:
             plot_bo(self.TransferOptimizer, transferTitle, save=save, saveFile=saveFile)
@@ -188,7 +209,7 @@ class problem:
         return transferResult, transferCosts, controlResult, controlCosts
 
 
-    def plot_result(self, title='', show=True, save=False, saveFile='./figures/infidelity'):
+    def plot_result(self, title='', show=True, save=False, saveFile='./figures/infidelity.png'):
         cost = self.config['cost']
         if self.StateOptimizer_list != []:
             totalStateIters = self.config['state-control-init']

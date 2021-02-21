@@ -6,7 +6,6 @@ problem: hadamard
 
 input-states:
   - '0'
-  - '+'
 
 state:
   opt-1:

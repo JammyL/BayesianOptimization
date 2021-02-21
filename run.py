@@ -9,7 +9,7 @@ import yaml
 
 args = sys.argv[1:]
 if len(args) < 2:
-    configPath = './problems/three_qubits/three_q_config.yaml'
+    configPath = './configs/three_q/decay/config_5.yaml'
     outputPath = 'results_10.pickle'
 else:
     configPath = args[0]

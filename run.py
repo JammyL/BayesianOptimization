@@ -51,7 +51,7 @@ for state in input_states:
 controlResults = []
 transferResults = []
 
-for _ in range(1):
+for _ in range(1000):
     p = problem(initialState_list=initial_state_list, configPath=configPath)
     p.default_opt()
     tResult, tCost, cResult, cCost = p.get_result()

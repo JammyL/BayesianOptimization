@@ -31,7 +31,10 @@ else:
     raise Exception("No problem specified in config. Please specify a problem e.g. 'problem: hadamard'")
 
 initial_state_list = []
-input_states = config['input-states']
+if 'input-states' in config.keys():
+    input_states = config['input-states']
+else:
+    input_states = []
 
 for state in input_states:
     qubit_list = []

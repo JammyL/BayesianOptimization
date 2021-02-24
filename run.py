@@ -1,4 +1,4 @@
-from problems import hadamard, threeQubitCircuit
+from problems import hadamard, twoQubitCircuit, threeQubitCircuit
 from qutip.qip.operations import snot
 from qutip.tensor import tensor
 import qutip as qt
@@ -22,6 +22,7 @@ with open(configPath) as file:
 
 problem_dict = {
     'hadamard': hadamard,
+    'two_q': twoQubitCircuit,
     'three_q': threeQubitCircuit,
 }
 

@@ -1,0 +1,62 @@
+# Parameters for optimization routines
+# All parameters must be included
+# Extra optimizations can be added as is done in "transfer:"
+state:
+  opt-1:
+    iters: 40
+    acq: 'ucb'
+    kappa: 10
+    kappa-decay: 1
+    decay-delay: 0
+
+transfer:
+  opt-1:
+    iters: 20
+    acq: 'multi_ucb'
+    kappa: 2
+    kappa-decay: 0.5
+    decay-delay: 1
+  opt-2:
+    iters: 28
+    acq: 'multi_ucb'
+    kappa: 0.001
+    kappa-decay: 0.5
+    decay-delay: 1
+
+control:
+  opt-1:
+    iters: 59
+    acq: 'ucb'
+    kappa: 1
+    kappa-decay: 0.5
+    decay-delay: 1
+
+# Number of initialization iters for state and control optimizers
+# These values must be the same for state and contorl to keep the testing fair
+state-control-init: 20
+
+# Initialisation for the transfer routine
+transfer-init:
+    iters: 5
+    acq: 'ucb'
+    kappa: 1
+    xi: 0.0
+
+cost:
+  state: 1
+  gate: 4
+
+pbounds:
+  a1:
+    !!python/tuple [-2, 2]
+  a2:
+    !!python/tuple [-2, 2]
+  a3:
+    !!python/tuple [-2, 2]
+  a4:
+    !!python/tuple [-2, 2]
+
+domainreduction:
+  gamma: 0.7
+  panning: 1.0
+  zoom: 0.9

@@ -1,4 +1,5 @@
 import warnings
+import random
 
 from .target_space import TargetSpace
 from .event import Events, DEFAULT_EVENTS
@@ -328,10 +329,11 @@ class BayesianOptimization(Observable):
 class TargetBayesianOptimization(BayesianOptimization):
 
     def __init__(self, f, pbounds, source_bo_list, random_state=None, verbose=2,
-                bounds_transformer=None, cost=0):
+                bounds_transformer=None, cost=1, feedback_param=0.0):
         BayesianOptimization.__init__(self, f, pbounds, random_state, verbose,
                 bounds_transformer, cost)
         self.source_bo_list = source_bo_list
+        self.feedback_param = feedback_param
 
     def maximize(self,
                  init_points=5,
@@ -398,12 +400,16 @@ class TargetBayesianOptimization(BayesianOptimization):
                 x_probe = self.suggest(util)
                 iteration += 1
             self.probe(x_probe, lazy=False)
+            extra_cost = 0
+            if random.random() < self.feedback_param:
+                for bo in self.source_bo_list:
+                    bo.probe(x_probe, lazy=False)
+                    extra_cost += bo.cost
 
             if self._bounds_transformer:
                 self.set_bounds(
                     self._bounds_transformer.transform(self._space))
-
-            self.data.add_points(self.max['target'], self.max['params'], self.cost)
+            self.data.add_points(self.max['target'], self.max['params'], self.cost + extra_cost)
 
         self.dispatch(Events.OPTIMIZATION_END)
 

@@ -79,6 +79,10 @@ class problem:
         else:
             self.StateOptimizer_list = []
         if 'transfer' and 'state' in self.config.keys():
+            if 'feedback' in self.config.keys():
+                feedback = self.config['feedback']
+            else:
+                feedback = 0.
             self.TransferOptimizer = TargetBayesianOptimization(
                 f=testGate,
                 pbounds=self.config['pbounds'],
@@ -86,6 +90,7 @@ class problem:
                 source_bo_list=self.StateOptimizer_list,
                 cost=self.config['cost']['gate'],
                 random_state=1,
+                feedback_param=feedback,
             )
         else:
             self.TransferOptimizer = None
@@ -135,6 +140,7 @@ class problem:
                     kappa_decay=optimization['kappa-decay'],
                     kappa_decay_delay=optimization['decay-delay'],
                 )
+
         if self.TransferOptimizer != None:
             self.TransferOptimizer.transferData(self.StateOptimizer_list)
             transferInit = self.config['transfer-init']

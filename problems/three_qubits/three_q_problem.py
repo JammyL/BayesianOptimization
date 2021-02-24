@@ -1,11 +1,13 @@
 from ..problem import problem
 from .three_q_generators import *
+from numpy import pi
 from qutip.qip.operations import snot
-import qutip as qt
-
 from qutip.qip.circuit import QubitCircuit
 from qutip.qip.operations import gate_sequence_product
 from qutip.tensor import tensor
+import qutip as qt
+
+
 
 spins = []
 
@@ -15,18 +17,17 @@ for i in range(1, 4):
 initial_state = tensor(spins)
 
 QC = QubitCircuit(3)
-QC.add_gate("RX", targets=0, arg_value= 0.5)
-QC.add_gate("RX", targets=1, arg_value= 0.1)
-QC.add_gate("RX", targets=2, arg_value= 0.2223472)
-QC.add_gate("CNOT", targets = 1, controls = 0)
-QC.add_gate("CNOT", targets = 2, controls = 0)
-QC.add_gate("RX", targets = 0, arg_value = 0.26127)
-QC.add_gate("RX", targets = 1, arg_value= 1.3942948)
-QC.add_gate("RX", targets = 2, arg_value= 0.4378)
+QC.add_gate("RY", targets=0, arg_value=pi/2)
+QC.add_gate("RZ", targets=1, arg_value=pi/4)
+QC.add_gate("RY", targets=2, arg_value=pi/2)
+QC.add_gate("CNOT", targets=1, controls=0)
+QC.add_gate("CNOT", targets=2, controls=0)
+QC.add_gate("RZ", targets=0, arg_value=pi/3)
+QC.add_gate("RY", targets=1, arg_value=pi/2)
+QC.add_gate("RZ", targets=2, arg_value=pi/4)
 U_list = QC.propagators()
 
 TargetGate = gate_sequence_product(U_list)
-TargetState = TargetGate * initial_state
 
 class threeQubitCircuit(problem):
     def __init__(self, initialState_list=[initial_state], targetGate=TargetGate, configPath='./problems/three_qubits/three_q_config.yaml', verbose=2):

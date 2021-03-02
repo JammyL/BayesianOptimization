@@ -1,0 +1,27 @@
+problem: hadamard
+
+input-states:
+  - '0'
+
+
+control:
+  opt-1:
+    iters: 100
+    acq: 'ucb'
+    kappa: 1
+    kappa-decay: 0.92
+    decay-delay: 20
+
+# Number of initialization iters for state and control optimizers
+# These values must be the same for state and contorl to keep the testing fair
+state-control-init: 20
+
+cost:
+  state: 1
+  gate: 2
+
+pbounds:
+  a1:
+    !!python/tuple [-2, 2]
+  a2:
+    !!python/tuple [-2, 2]

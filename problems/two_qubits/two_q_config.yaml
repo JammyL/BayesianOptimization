@@ -1,35 +1,42 @@
 # Parameters for optimization routines
 # All parameters must be included
 # Extra optimizations can be added as is done in "transfer:"
+problem: two_q
+
+input-states:
+  - '00'
+
+feedback: 0.3
+
 state:
   opt-1:
-    iters: 40
+    iters: 100
     acq: 'ucb'
-    kappa: 10
+    kappa: 15
     kappa-decay: 1
-    decay-delay: 0
+    kappa-delay: 0
 
 transfer:
   opt-1:
-    iters: 20
+    iters: 100
     acq: 'multi_ucb'
-    kappa: 2
-    kappa-decay: 0.5
-    decay-delay: 1
+    kappa: 100
+    kappa-decay: 1.0
+    kappa-delay: 0
   opt-2:
-    iters: 28
-    acq: 'multi_ucb'
-    kappa: 0.001
-    kappa-decay: 0.5
-    decay-delay: 1
+    iters: 100
+    acq: 'ei'
+    kappa: 10
+    kappa-decay: 1.0
+    kappa-delay: 0
 
 control:
   opt-1:
-    iters: 59
+    iters: 225
     acq: 'ucb'
     kappa: 1
-    kappa-decay: 0.5
-    decay-delay: 1
+    kappa-decay: 0.8
+    kappa-delay: 100
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
@@ -55,8 +62,3 @@ pbounds:
     !!python/tuple [-2, 2]
   a4:
     !!python/tuple [-2, 2]
-
-domainreduction:
-  gamma: 0.7
-  panning: 1.0
-  zoom: 0.9

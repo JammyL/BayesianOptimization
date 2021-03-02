@@ -14,9 +14,9 @@ def plot_bo(bo, title='', save=False, saveFile='./figures/'):
     mean, sigma = bo._gp.predict(positions, return_std=True)
     mean = np.reshape(mean, (-1,1000))
     sigma = np.reshape(sigma, (-1, 1000))
-    plt.rcParams.update({'font.size': 16})
+    plt.rcParams.update({'font.size': 18})
 
-    # mean = 1 - mean
+    mean = 1 - mean
 
     fig1 = plt.figure()
     fig2 = plt.figure()
@@ -65,6 +65,9 @@ class problem:
             # The FullLoader parameter handles the conversion from YAML
             # scalar values to Python the dictionary format
             self.config = yaml.load(file, Loader=yaml.FullLoader)
+        if 'transfer-init' in self.config.keys():
+            if not 'type' in self.config['transfer-init'].keys():
+                self.config['transfer-init']['type'] = 'state'
 
         # Primary State Optimizer is the first in the list
         # Data will be transfered from this optimizer
@@ -132,36 +135,73 @@ class problem:
                 if 'refine' in optimization.keys():
                     new_bounds = StateOptimizer.get_new_bounds(optimization['refine'])
                     StateOptimizer.set_bounds(new_bounds)
+                if not 'kappa-min' in optimization.keys():
+                    optimization['kappa-min'] = 0
+                if 'decay-delay' in optimization.keys() and 'kappa-delay' not in optimization.keys()
+                    optimization['kappa-delay'] = optimization['decay-delay']
                 StateOptimizer.maximize(
                     init_points=0,
                     n_iter=optimization['iters'],
                     acq=optimization['acq'],
                     kappa=optimization['kappa'],
                     kappa_decay=optimization['kappa-decay'],
-                    kappa_decay_delay=optimization['decay-delay'],
+                    kappa_decay_delay=optimization['kappa-delay'],
+                    kappa_min=optimization['kappa-min'],
                 )
 
         if self.TransferOptimizer != None:
             self.TransferOptimizer.transferData(self.StateOptimizer_list)
             transferInit = self.config['transfer-init']
-            for _ in range(transferInit['iters']):
-                stateIndex = np.random.randint(0, len(self.testState_list), 1)[0]
-                util = UtilityFunction(transferInit['acq'], kappa=transferInit['kappa'], xi=transferInit['xi'])
-                newPoint = self.StateOptimizer_list[stateIndex].suggest(util)
-                target = self.testGate(**newPoint)
-                self.TransferOptimizer.register(newPoint, target)
+            pbounds = self.config['pbounds']
+            params = pbounds.keys()
+            initPoints = []
+            if transferInit['type'] == 'random':
+                for p in params:
+                    initPoints.append(np.random.uniform(low=pbounds[p][0], high=pbounds[p][1], size=transferInit['iters']))
+            for i in range(transferInit['iters']):
+                if transferInit['type'] == 'state':
+                    stateIndex = np.random.randint(0, len(self.testState_list), 1)[0]
+                    util = UtilityFunction(transferInit['acq'], kappa=transferInit['kappa'], xi=transferInit['xi'])
+                    newPoint = self.StateOptimizer_list[stateIndex].suggest(util)
+                    target = self.testGate(**newPoint)
+                    self.TransferOptimizer.register(newPoint, target)
+                elif transferInit['type'] == 'random':
+                    newPoint = {}
+                    j = 0
+                    for p in params:
+                        newPoint[p] = initPoints[j][i]
+                        j += 1
+                    gateTarget = self.testGate(**newPoint)
+                    self.TransferOptimizer.register(newPoint, gateTarget)
+                else:
+                    raise Exception("Invalid tranfer init type. Choose 'state' or 'random'.")
 
             for optimization in self.config['transfer'].values():
                 if 'refine' in optimization.keys():
                     new_bounds = self.TransferOptimizer.get_new_bounds(optimization['refine'])
                     self.TransferOptimizer.set_bounds(new_bounds)
+                if not 'alpha' not in optimization.keys():
+                    optimization['alpha'] = 0
+                    optimization['alpha-decay'] = 1
+                    optimization['alpha-delay'] = 0
+                if not 'alpha-min' in optimization.keys():
+                    optimization['alpha-min'] = 0
+                if not 'kappa-min' in optimization.keys():
+                    optimization['kappa-min'] = 0
+                if 'decay-delay' in optimization.keys() and 'kappa-delay' not in optimization.keys():
+                    optimization['kappa-delay'] = optimization['decay-delay']
                 self.TransferOptimizer.maximize(
                     init_points=0,
                     n_iter=optimization['iters'],
                     acq=optimization['acq'],
                     kappa=optimization['kappa'],
                     kappa_decay=optimization['kappa-decay'],
-                    kappa_decay_delay=optimization['decay-delay'],
+                    kappa_decay_delay=optimization['kappa-delay'],
+                    kappa_min=optimization['kappa-min'],
+                    alpha=optimization['alpha'],
+                    alpha_decay=optimization['alpha-decay'],
+                    alpha_decay_delay=optimization['alpha-delay'],
+                    alpha_min=optimization['alpha-min'],
                 )
 
         if self.ControlOptimizer != None:
@@ -169,13 +209,18 @@ class problem:
                 if 'refine' in optimization.keys():
                     new_bounds = self.ControlOptimizer.get_new_bounds(optimization['refine'])
                     self.ControlOptimizer.set_bounds(new_bounds)
+                if not 'kappa-min' in optimization.keys():
+                    optimization['kappa-min'] = 0
+                if 'decay-delay' in optimization.keys() and 'kappa-delay' not in optimization.keys():
+                    optimization['kappa-delay'] = optimization['decay-delay']
                 self.ControlOptimizer.maximize(
                     init_points=0,
                     n_iter=optimization['iters'],
                     acq=optimization['acq'],
                     kappa=optimization['kappa'],
                     kappa_decay=optimization['kappa-decay'],
-                    kappa_decay_delay=optimization['decay-delay'],
+                    kappa_decay_delay=optimization['kappa-delay'],
+                    kappa_min=optimization['kappa-min'],
                 )
 
     def plot_gps(self, stateIndex='all', stateTitle='State', transferTitle='Gate - Transfer',

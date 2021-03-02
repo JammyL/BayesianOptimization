@@ -237,6 +237,7 @@ class BayesianOptimization(Observable):
                  kappa=2.576,
                  kappa_decay=1,
                  kappa_decay_delay=0,
+                 kappa_min=0,
                  xi=0.0,
                  **gp_params):
         """
@@ -284,7 +285,8 @@ class BayesianOptimization(Observable):
                                kappa=kappa,
                                xi=xi,
                                kappa_decay=kappa_decay,
-                               kappa_decay_delay=kappa_decay_delay)
+                               kappa_decay_delay=kappa_decay_delay,
+                               kappa_min=kappa_min)
         iteration = 0
         while not self._queue.empty or iteration < n_iter:
             try:
@@ -342,6 +344,11 @@ class TargetBayesianOptimization(BayesianOptimization):
                  kappa=2.576,
                  kappa_decay=1,
                  kappa_decay_delay=0,
+                 kappa_min=0,
+                 alpha=2,
+                 alpha_decay=1,
+                 alpha_decay_delay=0,
+                 alpha_min=0,
                  xi=0.0,
                  **gp_params):
         """
@@ -387,10 +394,15 @@ class TargetBayesianOptimization(BayesianOptimization):
 
         util = MultiUtilityFunction(kind=acq,
                                kappa=kappa,
+                               alpha=alpha,
                                xi=xi,
                                source_bo_list = self.source_bo_list,
                                kappa_decay=kappa_decay,
-                               kappa_decay_delay=kappa_decay_delay)
+                               kappa_decay_delay=kappa_decay_delay,
+                               kappa_min=kappa_min,
+                               alpha_decay=alpha_decay,
+                               alpha_decay_delay=alpha_decay_delay,
+                               alpha_min=alpha_min)
         iteration = 0
         while not self._queue.empty or iteration < n_iter:
             try:

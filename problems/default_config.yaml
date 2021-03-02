@@ -1,3 +1,8 @@
+problem: 'hadamard'
+
+input-states:
+  - '0'
+
 state:
   init: 20
   opt-1:
@@ -5,7 +10,7 @@ state:
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1
-    decay-delay: 0
+    kappa-delay: 0
 
 transfer:
   init: 5
@@ -14,13 +19,13 @@ transfer:
     acq: 'multi_ucb'
     kappa: 2
     kappa-decay: 1
-    decay-delay: 0
+    kappa-delay: 0
   opt-2:
     iters: 28
     acq: 'multi_ucb'
     kappa: 0.001
     kappa-decay: 0.5
-    decay-delay: 0
+    kappa-delay: 0
 
 control:
   init: 20
@@ -29,7 +34,7 @@ control:
     acq: 'ucb'
     kappa: 1
     kappa-decay: 0.5
-    decay-delay: 5
+    kappa-delay: 5
 
 cost:
   state: 1

@@ -3,36 +3,45 @@
 
 problem: three_q
 
+input-states:
+  - '000'
+
+feedback: 0.2
+
 state:
   opt-1:
-    iters: 100
+    iters: 200
     acq: 'ucb'
     kappa: 10
-    kappa-decay: 1
-    decay-delay: 0
+    kappa-decay: 0.95
+    kappa-delay: 100
 
 transfer:
   opt-1:
-    iters: 150
+    iters: 160
     acq: 'multi_ucb'
     kappa: 100
-    kappa-decay: 1
-    decay-delay: 0
+    kappa-decay: 0.8
+    kappa-delay: 50
+    alpha: 10
+    alpha-decay: 0.8
+    alpha-delay: 50
+    alpha-min: 0.001
 
 control:
   opt-1:
-    iters: 160
+    iters: 220
     acq: 'ucb'
     kappa: 1
     kappa-decay: 0.8
-    decay-delay: 80
+    kappa-delay: 80
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
-state-control-init: 30
+state-control-init: 60
 
 transfer-init:
-    iters: 5
+    iters: 10
     acq: 'ucb'
     kappa: 1
     xi: 0.0
@@ -43,15 +52,15 @@ cost:
 
 pbounds:
   a1:
-    !!python/tuple [0, 10]
+    !!python/tuple [-3, 3]
   a2:
-    !!python/tuple [0, 2]
+    !!python/tuple [-3, 3]
   a3:
-    !!python/tuple [0, 2]
+    !!python/tuple [-3, 3]
   a4:
-    !!python/tuple [0, 2]
+    !!python/tuple [-3, 3]
   a5:
-    !!python/tuple [0, 2]
+    !!python/tuple [-3, 3]
   a6:
-    !!python/tuple [0, 2]
+    !!python/tuple [-3, 3]
 

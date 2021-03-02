@@ -7,7 +7,7 @@ control:
     acq: 'ucb'
     kappa: 0.5
     kappa-decay: 0.8
-    decay-delay: 50
+    kappa-delay: 50
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair

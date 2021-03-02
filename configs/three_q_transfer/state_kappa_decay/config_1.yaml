@@ -14,7 +14,7 @@ state:
     acq: 'ucb'
     kappa: 10
     kappa-decay: 0.5
-    decay-delay: 80
+    kappa-delay: 80
 
 transfer:
   opt-1:
@@ -22,7 +22,7 @@ transfer:
     acq: 'multi_ucb'
     kappa: 100
     kappa-decay: 0.8
-    decay-delay: 30
+    kappa-delay: 30
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair

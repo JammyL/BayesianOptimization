@@ -1,8 +1,10 @@
 from problems import hadamard, twoQubitCircuit, threeQubitCircuit
 from qutip.qip.operations import snot
 from qutip.tensor import tensor
+from qutip.random_objects import rand_ket
 import qutip as qt
 import numpy as np
+import logging
 import pickle
 import sys
 import yaml
@@ -39,7 +41,12 @@ else:
 
 for state in input_states:
     qubit_list = []
+    random = False
     for qubit in reversed(state):
+        if qubit == 'r':
+            initial_state_list.append(rand_ket(2**len(state)))
+            random = True
+            break
         if qubit == '+':
             qubit_list.append(snot(1) * qt.basis(2,0))
         elif qubit == '-':
@@ -50,19 +57,23 @@ for state in input_states:
             qubit_list.append(qt.basis(2,1))
         else:
             raise Exception("Invalid qubit choice: %s, please choose '0', '1', '+', or '-'".format(qubit))
-    initial_state_list.append(tensor(qubit_list))
+    if not random:
+        initial_state_list.append(tensor(qubit_list))
 
 controlResults = []
 transferResults = []
 
-for _ in range(1):
-    p = problem(initialState_list=initial_state_list, configPath=configPath)
-    p.default_opt()
-    tResult, tCost, cResult, cCost = p.get_result()
-    if p.ControlOptimizer != None:
-        controlResults.append(cResult)
-    if p.TransferOptimizer != None:
-        transferResults.append(tResult)
+for i in range(1):
+    try:
+        p = problem(initialState_list=initial_state_list, configPath=configPath, verbose=2)
+        p.default_opt()
+        tResult, tCost, cResult, cCost = p.get_result()
+        if p.ControlOptimizer != None:
+            controlResults.append(cResult)
+        if p.TransferOptimizer != None:
+            transferResults.append(tResult)
+    except Exception as e:
+        logging.exception('Error in iteration {}'.format(i))
 
 resultsToPickle = {
     'config': p.config,

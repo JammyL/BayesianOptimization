@@ -1,4 +1,4 @@
-from problems import hadamard, threeQubitCircuit
+from problems import hadamard, threeQubitCircuit, twoQubitCircuit
 from qutip.qip.operations import snot
 from qutip.tensor import tensor
 import qutip as qt
@@ -9,7 +9,7 @@ import yaml
 
 args = sys.argv[1:]
 if len(args) < 2:
-    configPath = './configs/three_q/decay/config_5.yaml'
+    configPath = './configs/two_q/decay/config_5.yaml'
     outputPath = 'results_10.pickle'
 else:
     configPath = args[0]
@@ -23,6 +23,7 @@ with open(configPath) as file:
 problem_dict = {
     'hadamard': hadamard,
     'three_q': threeQubitCircuit,
+    'two_q' : twoQubitCircuit
 }
 
 if 'problem' in config.keys():
@@ -47,6 +48,7 @@ for state in input_states:
         else:
             raise Exception("Invalid qubit choice: %s, please choose '0', '1', '+', or '-'".format(qubit))
     initial_state_list.append(tensor(qubit_list))
+    print(initial_state_list)
 
 controlResults = []
 transferResults = []
@@ -54,6 +56,7 @@ transferResults = []
 for _ in range(1000):
     p = problem(initialState_list=initial_state_list, configPath=configPath)
     p.default_opt()
+    p.plot_result()
     tResult, tCost, cResult, cCost = p.get_result()
     if p.ControlOptimizer != None:
         controlResults.append(cResult)

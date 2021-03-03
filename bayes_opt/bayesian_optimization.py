@@ -340,6 +340,9 @@ class TargetBayesianOptimization(BayesianOptimization):
                  kappa=2.576,
                  kappa_decay=1,
                  kappa_decay_delay=0,
+                 alpha = 1,
+                 alpha_decay = 1,
+                 alpha_delay = 0,
                  xi=0.0,
                  **gp_params):
         """
@@ -388,7 +391,10 @@ class TargetBayesianOptimization(BayesianOptimization):
                                xi=xi,
                                source_bo_list = self.source_bo_list,
                                kappa_decay=kappa_decay,
-                               kappa_decay_delay=kappa_decay_delay)
+                               kappa_decay_delay=kappa_decay_delay,
+                               alpha=alpha,
+                               alpha_decay=alpha_decay,
+                               alpha_delay=alpha_delay)
         iteration = 0
         while not self._queue.empty or iteration < n_iter:
             try:

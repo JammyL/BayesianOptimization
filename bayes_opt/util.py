@@ -138,7 +138,7 @@ class UtilityFunction(object):
 
 class MultiUtilityFunction(UtilityFunction):
     def __init__(self, kind, kappa, alpha, xi, source_bo_list, kappa_decay=1, kappa_decay_delay=0,
-                    alpha_decay=1, alpha_decay_delay=0, alpha_min=0, kappa_min=0, pow=1):
+                    alpha_decay=1, alpha_decay_delay=0, alpha_min=0, kappa_min=0, power=1):
 
         self.kappa = kappa
         self._kappa_decay = kappa_decay
@@ -148,7 +148,7 @@ class MultiUtilityFunction(UtilityFunction):
         self._alpha_min = alpha_min
         self._alpha_decay = alpha_decay
         self._alpha_decay_delay = alpha_decay_delay
-        self._pow = pow
+        self._pow = power
         self.source_gp_list = [bo._gp for bo in source_bo_list]
 
         self.xi = xi
@@ -165,7 +165,7 @@ class MultiUtilityFunction(UtilityFunction):
 
     def utility(self, x, gp, y_max):
         if self.kind == 'multi_ucb':
-            return self._multi_ucb(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa, self.alpha, self._pow)
+            return self._multi_ucb(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa, alpha=self.alpha, power=self._pow)
         if self.kind == 'alternate':
             return self._alternate_multi(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa)
         if self.kind == 'multi_ucb_weighted':
@@ -178,13 +178,13 @@ class MultiUtilityFunction(UtilityFunction):
             return self._poi(x, gp, y_max, self.xi)
 
     @staticmethod
-    def _multi_ucb(x, target_gp, source_gp_list, kappa, alpha, pow=1):
+    def _multi_ucb(x, target_gp, source_gp_list, kappa, alpha, power=1):
         target_mean, target_std = target_gp.predict(x, return_std=True)
         source_mean_sum = 0
         for source_gp in source_gp_list:
             source_mean_sum += source_gp.predict(x, return_std=False)
         source_mean_avg = source_mean_sum / len(source_gp_list)
-        return target_mean + source_mean_avg + ((target_mean - source_mean_avg + (alpha * target_std )) * np.exp(-(kappa * target_std)**pow))
+        return target_mean + source_mean_avg + ((target_mean - source_mean_avg + (alpha * target_std )) * np.exp(-(kappa * target_std)**power))
 
     @staticmethod
     def _multi_ucb_weighted(x, target_gp, source_gp_list, kappa):

@@ -137,7 +137,7 @@ class problem:
                     StateOptimizer.set_bounds(new_bounds)
                 if not 'kappa-min' in optimization.keys():
                     optimization['kappa-min'] = 0
-                if 'decay-delay' in optimization.keys() and 'kappa-delay' not in optimization.keys()
+                if 'decay-delay' in optimization.keys() and 'kappa-delay' not in optimization.keys():
                     optimization['kappa-delay'] = optimization['decay-delay']
                 StateOptimizer.maximize(
                     init_points=0,
@@ -180,7 +180,7 @@ class problem:
                 if 'refine' in optimization.keys():
                     new_bounds = self.TransferOptimizer.get_new_bounds(optimization['refine'])
                     self.TransferOptimizer.set_bounds(new_bounds)
-                if not 'alpha' not in optimization.keys():
+                if not 'alpha' in optimization.keys():
                     optimization['alpha'] = 0
                     optimization['alpha-decay'] = 1
                     optimization['alpha-delay'] = 0
@@ -190,6 +190,8 @@ class problem:
                     optimization['kappa-min'] = 0
                 if 'decay-delay' in optimization.keys() and 'kappa-delay' not in optimization.keys():
                     optimization['kappa-delay'] = optimization['decay-delay']
+                if not 'pow' in optimization.keys():
+                    optimization['pow'] = 1
                 self.TransferOptimizer.maximize(
                     init_points=0,
                     n_iter=optimization['iters'],
@@ -202,6 +204,7 @@ class problem:
                     alpha_decay=optimization['alpha-decay'],
                     alpha_decay_delay=optimization['alpha-delay'],
                     alpha_min=optimization['alpha-min'],
+                    power=optimization['pow'],
                 )
 
         if self.ControlOptimizer != None:

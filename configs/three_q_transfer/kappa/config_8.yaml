@@ -1,6 +1,11 @@
 # Parameters for optimization routines
 # Extra optimizations can be added as is done in "transfer:"
 
+problem: three_q
+
+input-states:
+  - '000'
+
 state:
   opt-1:
     iters: 100

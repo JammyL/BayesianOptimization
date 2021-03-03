@@ -1,4 +1,4 @@
-from problems import hadamard, twoQubitCircuit, threeQubitCircuit
+from problems import hadamard, twoQubitCircuit, threeQubitCircuit, threeQubitCircuitYZ
 from qutip.qip.operations import snot
 from qutip.tensor import tensor
 from qutip.random_objects import rand_ket
@@ -26,6 +26,7 @@ problem_dict = {
     'hadamard': hadamard,
     'two_q': twoQubitCircuit,
     'three_q': threeQubitCircuit,
+    'three_q_yz': threeQubitCircuitYZ,
 }
 
 if 'problem' in config.keys():
@@ -60,12 +61,15 @@ for state in input_states:
     if not random:
         initial_state_list.append(tensor(qubit_list))
 
+if len(initial_state_list) == 0:
+    raise Exception("No states specified, please specify 'input-states:' in {}".format(configPath))
+
 controlResults = []
 transferResults = []
 
 for i in range(1):
     try:
-        p = problem(initialState_list=initial_state_list, configPath=configPath, verbose=2)
+        p = problem(initialState_list=initial_state_list, configPath=configPath, verbose=1)
         p.default_opt()
         tResult, tCost, cResult, cCost = p.get_result()
         if p.ControlOptimizer != None:

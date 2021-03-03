@@ -61,7 +61,7 @@ for state in input_states:
     if not random:
         initial_state_list.append(tensor(qubit_list))
 
-if len(initial_state_list) == 0:
+if len(initial_state_list) == 0 and 'state' in config.keys():
     raise Exception("No states specified, please specify 'input-states:' in {}".format(configPath))
 
 controlResults = []

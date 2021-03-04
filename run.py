@@ -42,13 +42,10 @@ else:
 
 for state in input_states:
     qubit_list = []
-    random = False
     for qubit in reversed(state):
         if qubit == 'r':
-            initial_state_list.append(rand_ket(2**len(state)))
-            random = True
-            break
-        if qubit == '+':
+            qubit_list.append(rand_ket(2))
+        elif qubit == '+':
             qubit_list.append(snot(1) * qt.basis(2,0))
         elif qubit == '-':
             qubit_list.append(snot(1) * qt.basis(2,1))
@@ -58,8 +55,7 @@ for state in input_states:
             qubit_list.append(qt.basis(2,1))
         else:
             raise Exception("Invalid qubit choice: %s, please choose '0', '1', '+', or '-'".format(qubit))
-    if not random:
-        initial_state_list.append(tensor(qubit_list))
+    initial_state_list.append(tensor(qubit_list))
 
 if len(initial_state_list) == 0 and 'state' in config.keys():
     raise Exception("No states specified, please specify 'input-states:' in {}".format(configPath))

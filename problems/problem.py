@@ -16,8 +16,6 @@ def plot_bo(bo, title='', save=False, saveFile='./figures/'):
     sigma = np.reshape(sigma, (-1, 1000))
     plt.rcParams.update({'font.size': 18})
 
-    mean = 1 - mean
-
     fig1 = plt.figure()
     fig2 = plt.figure()
     ax1 = fig1.add_subplot(111)
@@ -56,6 +54,9 @@ def plot_bo(bo, title='', save=False, saveFile='./figures/'):
 
 def fid_to_infidelity(data):
     return 1 - data
+
+def no_change(data):
+    return data
 
 class problem:
     def __init__(self, testState_list, testGate, configPath='./problems/default_config.yaml', verbose=2):
@@ -155,26 +156,29 @@ class problem:
             pbounds = self.config['pbounds']
             params = pbounds.keys()
             initPoints = []
-            if transferInit['type'] == 'random':
-                for p in params:
-                    initPoints.append(np.random.uniform(low=pbounds[p][0], high=pbounds[p][1], size=transferInit['iters']))
-            for i in range(transferInit['iters']):
-                if transferInit['type'] == 'state':
-                    stateIndex = np.random.randint(0, len(self.testState_list), 1)[0]
-                    util = UtilityFunction(transferInit['acq'], kappa=transferInit['kappa'], xi=transferInit['xi'])
-                    newPoint = self.StateOptimizer_list[stateIndex].suggest(util)
-                    target = self.testGate(**newPoint)
-                    self.TransferOptimizer.register(newPoint, target)
-                elif transferInit['type'] == 'random':
-                    newPoint = {}
-                    j = 0
+            if type(transferInit['type']) != list:
+                transferInit['type'] = [transferInit['type']]
+            for initType in transferInit['type']:
+                if initType == 'random':
                     for p in params:
-                        newPoint[p] = initPoints[j][i]
-                        j += 1
-                    gateTarget = self.testGate(**newPoint)
-                    self.TransferOptimizer.register(newPoint, gateTarget)
-                else:
-                    raise Exception("Invalid tranfer init type. Choose 'state' or 'random'.")
+                        initPoints.append(np.random.uniform(low=pbounds[p][0], high=pbounds[p][1], size=transferInit['iters']))
+                for i in range(transferInit['iters']):
+                    if initType == 'state':
+                        stateIndex = np.random.randint(0, len(self.testState_list), 1)[0]
+                        util = UtilityFunction(transferInit['acq'], kappa=transferInit['kappa'], xi=transferInit['xi'])
+                        newPoint = self.StateOptimizer_list[stateIndex].suggest(util)
+                        target = self.testGate(**newPoint)
+                        self.TransferOptimizer.register(newPoint, target)
+                    elif initType == 'random':
+                        newPoint = {}
+                        j = 0
+                        for p in params:
+                            newPoint[p] = initPoints[j][i]
+                            j += 1
+                        gateTarget = self.testGate(**newPoint)
+                        self.TransferOptimizer.register(newPoint, gateTarget)
+                    else:
+                        raise Exception("Invalid tranfer init type. Choose 'state' or 'random'.")
 
             for optimization in self.config['transfer'].values():
                 if 'refine' in optimization.keys():

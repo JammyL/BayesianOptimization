@@ -1,4 +1,4 @@
-from problems import hadamard, twoQubitCircuit, threeQubitCircuit, threeQubitCircuitYZ
+from problems import hadamard, hadamardRandomState, twoQubitCircuit, threeQubitCircuit, threeQubitCircuitYZ
 from qutip.qip.operations import snot
 from qutip.tensor import tensor
 from qutip.random_objects import rand_ket
@@ -24,6 +24,7 @@ with open(configPath) as file:
 
 problem_dict = {
     'hadamard': hadamard,
+    'hadamard_random_state': hadamardRandomState,
     'two_q': twoQubitCircuit,
     'three_q': threeQubitCircuit,
     'three_q_yz': threeQubitCircuitYZ,

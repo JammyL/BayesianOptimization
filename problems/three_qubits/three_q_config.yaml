@@ -18,16 +18,22 @@ state:
 transfer:
   opt-1:
     iters: 20
-    acq: 'multi_ucb'
+    acq: 'multi_ucb_linear'
     kappa: 2
     kappa-decay: 1
     kappa-delay: 0
+    alpha: 1
+    alpha-decay: 1
+    alpha-delay: 0
   opt-2:
     iters: 28
-    acq: 'multi_ucb'
+    acq: 'multi_ucb_linear'
     kappa: 0.001
     kappa-decay: 0.5
     kappa-delay: 0
+    alpha: 1
+    alpha-decay: 1
+    alpha-delay: 0
 
 control:
   opt-1:

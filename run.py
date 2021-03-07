@@ -71,6 +71,7 @@ for i in range(1):
     try:
         p = problem(initialState_list=initial_state_list, configPath=configPath, verbose=1)
         p.default_opt()
+        p.plot_result()
         tResult, tCost, cResult, cCost = p.get_result()
         if p.ControlOptimizer != None:
             controlResults.append(cResult)

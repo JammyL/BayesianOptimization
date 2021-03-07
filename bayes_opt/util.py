@@ -155,7 +155,7 @@ class MultiUtilityFunction(UtilityFunction):
 
         self._iters_counter = 0
 
-        if kind not in ['multi_ucb_weighted', 'alternate', 'multi_ucb', 'ucb', 'ei', 'poi']:
+        if kind not in ['multi_ucb_weighted', 'alternate', 'multi_ucb', 'ucb', 'ei', 'poi', 'multi_ucb_linear']:
             err = "The utility function " \
                   "{} has not been implemented, " \
                   "please choose one of 'multi_ucb'.".format(kind)
@@ -166,6 +166,8 @@ class MultiUtilityFunction(UtilityFunction):
     def utility(self, x, gp, y_max):
         if self.kind == 'multi_ucb':
             return self._multi_ucb(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa, alpha=self.alpha, power=self._pow)
+        if self.kind == 'multi_ucb_linear':
+            return self._multi_ucb_linear(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa, alpha=self.alpha)
         if self.kind == 'alternate':
             return self._alternate_multi(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa)
         if self.kind == 'multi_ucb_weighted':
@@ -197,6 +199,20 @@ class MultiUtilityFunction(UtilityFunction):
             inverse_std_sum += 1 / stdev
         source_mean_avg = source_mean_sum / inverse_std_sum
         return target_mean + source_mean_avg - ((source_mean_avg - target_mean) * np.exp(-(target_std * kappa)))
+
+    @staticmethod
+    def _multi_ucb_linear(x, target_gp, source_gp_list, kappa, alpha):
+        target_mean, target_std = target_gp.predict(x, return_std=True)
+        num = len(source_gp_list)
+        source_mean_sum = 0
+        std_av = 0
+        for source_gp in source_gp_list:
+            mean, stdev = source_gp.predict(x, return_std=True)
+            source_mean_sum += mean
+            std_av += stdev**2
+        source_mean_avg = source_mean_sum / num
+        source_std_geo_mean = np.sqrt(std_av)
+        return target_mean + alpha*source_std_geo_mean + kappa*source_mean_avg
 
     @staticmethod
     def _alternate_multi(x, target_gp, source_gp_list, kappa):

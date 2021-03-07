@@ -9,7 +9,7 @@ control:
     iters: 100
     acq: 'ucb'
     kappa: 1
-    kappa-decay: 0.92
+    kappa-decay: 0.82
     decay-delay: 20
 
 # Number of initialization iters for state and control optimizers

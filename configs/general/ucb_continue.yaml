@@ -45,7 +45,8 @@ transfer-init:
     acq: 'ucb'
     kappa: 10
     xi: 0.0
-    type: 'random'
+    type:
+      - 'state'
 
 cost:
   state: 1

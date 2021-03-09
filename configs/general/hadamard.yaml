@@ -44,8 +44,11 @@ state-control-init: 10
 transfer-init:
     iters: 10
     acq: 'ucb'
-    kappa: 10
+    kappa: 0.1
     xi: 0.0
+    type:
+      - 'state'
+      # - 'random'
 
 cost:
   state: 1

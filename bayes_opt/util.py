@@ -1,4 +1,5 @@
 import warnings
+import logging
 import numpy as np
 from scipy.stats import norm
 from scipy.optimize import minimize
@@ -70,6 +71,38 @@ def acq_max(ac, gp, y_max, bounds, random_state, n_warmup=10000, n_iter=10):
     # point technicalities this is not always the case.
     return np.clip(x_max, bounds[:, 0], bounds[:, 1])
 
+def get_percentile_val(fn, x0, percentile):
+    try:
+        y0 = sorted([fn(x) for x in x0])
+        index = int(percentile * len(y0))
+        return y0[index], True
+    except:
+        logging.exception('Error in get_percentile_val().')
+        return 0, False
+
+def acq_sigma(gp, y_max, bounds, random_state, percentile, n_iter=1000):
+
+    min_acq = None
+
+    # Explore the parameter space more throughly
+    x_seeds = random_state.uniform(bounds[:, 0], bounds[:, 1],
+                                   size=(n_iter, bounds.shape[0]))
+    for x_try in x_seeds:
+        # Find the minimum of minus the acquisition function
+        res = get_percentile_val(lambda x: gp.predict(x.reshape(1, -1), return_std=True)[1],
+                       x_try.reshape(1, -1),
+                       percentile)
+                    #    bounds=bounds,
+                    #    method="L-BFGS-B")
+
+        # See if success
+        if not res[1]:
+            continue
+
+        # Store it if better than previous minimum(maximum).
+        if min_acq is None or res[0] <= min_acq:
+            min_acq = res[0]
+    return min_acq
 
 class UtilityFunction(object):
     """
@@ -215,16 +248,22 @@ class MultiUtilityFunction(UtilityFunction):
         source_mean_avg = source_mean_sum / len(source_gp_list)
         return target_mean + source_mean_avg - ((source_mean_avg - target_mean) * (np.exp(-(target_std * kappa)) + (kappa * target_std)))
 
-
-    def update_params(self):
+    def update_params(self, gp, y_max, bounds, random_state, percentile):
         self._iters_counter += 1
+        if type(self._kappa_decay) == str:
+            if self._kappa_decay == 'dynamic':
+                self.kappa = 1 / acq_sigma(gp=gp,
+                                        y_max=y_max,
+                                        bounds=bounds,
+                                        random_state=random_state,
+                                        percentile=percentile)
 
-        if self._kappa_decay < 1 and self._iters_counter > self._kappa_decay_delay and self.kappa > self._kappa_min:
-            self.kappa *= self._kappa_decay
+        if type(self._kappa_decay) == float:
+            if self._iters_counter > self._kappa_decay_delay and self.kappa > self._kappa_min:
+                self.kappa *= self._kappa_decay
 
         if self._iters_counter > self._alpha_decay_delay and self.alpha > self._alpha_min:
             self.alpha *= self._alpha_decay
-
 
 def load_logs(optimizer, logs):
     """Load previous ...

@@ -6,6 +6,7 @@ from .event import Events, DEFAULT_EVENTS
 from .logger import _get_default_logger
 from .util import UtilityFunction, MultiUtilityFunction, acq_max, ensure_rng
 
+from copy import deepcopy
 from dataclasses import dataclass, field
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -410,7 +411,12 @@ class TargetBayesianOptimization(BayesianOptimization):
             try:
                 x_probe = next(self._queue)
             except StopIteration:
-                util.update_params()
+                util.update_params(gp=self._gp,
+                            y_max=self._space.target.max(),
+                            bounds=self._space.bounds,
+                            random_state=self._random_state,
+                            percentile=0.000)
+
                 x_probe = self.suggest(util)
                 iteration += 1
             self.probe(x_probe, lazy=False)
@@ -428,7 +434,7 @@ class TargetBayesianOptimization(BayesianOptimization):
         self.dispatch(Events.OPTIMIZATION_END)
 
     def transferData(self, other_list):
-        self.data = other_list[0].data
+        self.data = deepcopy(other_list[0].data)
         for i in range(len(self.data.cost)):
             self.data.cost[i] *= len(other_list)
         for i in range(len(self.data.bestResult)):

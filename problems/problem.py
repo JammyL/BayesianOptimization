@@ -82,7 +82,7 @@ class problem:
             ) for testState in testState_list]
         else:
             self.StateOptimizer_list = []
-        if 'transfer' and 'state' in self.config.keys():
+        if 'transfer' in self.config.keys() and 'state' in self.config.keys():
             if 'feedback' in self.config.keys():
                 feedback = self.config['feedback']
             else:
@@ -115,8 +115,7 @@ class problem:
         initPoints = []
         for p in params:
             initPoints.append(np.random.uniform(low=pbounds[p][0], high=pbounds[p][1], size=self.config['state-control-init']))
-
-        for i in range(len(initPoints)):
+        for i in range(self.config['state-control-init']):
             newPoint = {}
             j = 0
             for p in params:
@@ -165,10 +164,16 @@ class problem:
                 for i in range(transferInit['iters']):
                     if initType == 'state':
                         stateIndex = np.random.randint(0, len(self.testState_list), 1)[0]
+                        self.TransferOptimizer.cost += self.StateOptimizer_list[stateIndex].cost
                         util = UtilityFunction(transferInit['acq'], kappa=transferInit['kappa'], xi=transferInit['xi'])
                         newPoint = self.StateOptimizer_list[stateIndex].suggest(util)
-                        target = self.testGate(**newPoint)
-                        self.TransferOptimizer.register(newPoint, target)
+                        gateTarget = self.testGate(**newPoint)
+                        stateTarget = self.testState_list[stateIndex](**newPoint)
+                        self.StateOptimizer_list[stateIndex].register(newPoint, stateTarget)
+                        self.TransferOptimizer.register(newPoint, gateTarget)
+                        if i > 2:
+                            self.TransferOptimizer.suggest(util)
+                        self.TransferOptimizer.cost -= self.StateOptimizer_list[stateIndex].cost
                     elif initType == 'random':
                         newPoint = {}
                         j = 0
@@ -273,6 +278,8 @@ class problem:
             totalStateIters = self.config['state-control-init']
             for optimization in self.config['state'].values():
                 totalStateIters += optimization['iters']
+            totalStateIters += self.config['transfer-init']['iters'] * len(self.config['transfer-init']['type']) \
+                * (self.config['cost']['gate'] + (self.config['cost']['state']))
         if self.TransferOptimizer != None:
             transferPoint = totalStateIters * cost['state'] * len(self.StateOptimizer_list)
 

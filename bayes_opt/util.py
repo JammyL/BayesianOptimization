@@ -1,4 +1,5 @@
 import warnings
+import logging
 import numpy as np
 from scipy.stats import norm
 from scipy.optimize import minimize
@@ -70,17 +71,50 @@ def acq_max(ac, gp, y_max, bounds, random_state, n_warmup=10000, n_iter=10):
     # point technicalities this is not always the case.
     return np.clip(x_max, bounds[:, 0], bounds[:, 1])
 
+def get_percentile_val(fn, x0, percentile):
+    try:
+        y0 = sorted([fn(x) for x in x0])
+        index = int(percentile * len(y0))
+        return y0[index], True
+    except:
+        logging.exception('Error in get_percentile_val().')
+        return 0, False
+
+def acq_sigma(gp, y_max, bounds, random_state, percentile, n_iter=1000):
+
+    min_acq = None
+
+    # Explore the parameter space more throughly
+    x_seeds = random_state.uniform(bounds[:, 0], bounds[:, 1],
+                                   size=(n_iter, bounds.shape[0]))
+    for x_try in x_seeds:
+        # Find the minimum of minus the acquisition function
+        res = get_percentile_val(lambda x: gp.predict(x.reshape(1, -1), return_std=True)[1],
+                       x_try.reshape(1, -1),
+                       percentile)
+                    #    bounds=bounds,
+                    #    method="L-BFGS-B")
+
+        # See if success
+        if not res[1]:
+            continue
+
+        # Store it if better than previous minimum(maximum).
+        if min_acq is None or res[0] <= min_acq:
+            min_acq = res[0]
+    return min_acq
 
 class UtilityFunction(object):
     """
     An object to compute the acquisition functions.
     """
 
-    def __init__(self, kind, kappa, xi, kappa_decay=1, kappa_decay_delay=0):
+    def __init__(self, kind, kappa, xi, kappa_decay=1, kappa_decay_delay=0, kappa_min=0):
 
         self.kappa = kappa
         self._kappa_decay = kappa_decay
         self._kappa_decay_delay = kappa_decay_delay
+        self._kappa_min = kappa_min
 
         self.xi = xi
 
@@ -97,7 +131,7 @@ class UtilityFunction(object):
     def update_params(self):
         self._iters_counter += 1
 
-        if self._kappa_decay < 1 and self._iters_counter > self._kappa_decay_delay:
+        if self._kappa_decay < 1 and self._iters_counter > self._kappa_decay_delay and self.kappa > self._kappa_min:
             self.kappa *= self._kappa_decay
 
     def utility(self, x, gp, y_max):
@@ -136,30 +170,42 @@ class UtilityFunction(object):
         return norm.cdf(z)
 
 class MultiUtilityFunction(UtilityFunction):
-    def __init__(self, kind, kappa, xi, source_bo_list, kappa_decay=1, kappa_decay_delay=0):
+    def __init__(self, kind, kappa, alpha, xi, source_bo_list, kappa_decay=1, kappa_decay_delay=0,
+                    alpha_decay=1, alpha_decay_delay=0, alpha_min=0, kappa_min=0, power=1):
 
         self.kappa = kappa
         self._kappa_decay = kappa_decay
         self._kappa_decay_delay = kappa_decay_delay
+        self._kappa_min = kappa_min
+        self.alpha = alpha
+        self._alpha_min = alpha_min
+        self._alpha_decay = alpha_decay
+        self._alpha_decay_delay = alpha_decay_delay
+        self._pow = power
         self.source_gp_list = [bo._gp for bo in source_bo_list]
 
         self.xi = xi
 
         self._iters_counter = 0
 
-        if kind not in ['alternate', 'multi_ucb', 'ucb', 'ei', 'poi']:
+        if kind not in ['multi_ucb_weighted', 'multi_flat', 'alternate', 'multi_ucb', 'ucb', 'ei', 'poi']:
             err = "The utility function " \
                   "{} has not been implemented, " \
-                  "please choose one of 'multi_ucb'.".format(kind)
+                  "please choose one of 'multi_ucb_weighted'," \
+                  "'multi_flat', 'alternate', 'multi_ucb', 'ucb', 'ei', 'poi'.".format(kind)
             raise NotImplementedError(err)
         else:
             self.kind = kind
 
     def utility(self, x, gp, y_max):
+        if self.kind == 'multi_ucb':
+            return self._multi_ucb(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa, alpha=self.alpha, power=self._pow)
+        if self.kind == 'multi_flat':
+            return self._multi_flat_state(x, target_gp=gp, kappa=self.kappa, alpha=self.alpha, power=self._pow)
+        if self.kind == 'multi_ucb_weighted':
+            return self._multi_ucb_weighted(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa)
         if self.kind == 'alternate':
             return self._alternate_multi(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa)
-        if self.kind == 'multi_ucb':
-            return self._multi_ucb(x, target_gp=gp, source_gp_list=self.source_gp_list, kappa=self.kappa)
         if self.kind == 'ucb':
             return self._ucb(x, gp, self.kappa)
         if self.kind == 'ei':
@@ -168,12 +214,29 @@ class MultiUtilityFunction(UtilityFunction):
             return self._poi(x, gp, y_max, self.xi)
 
     @staticmethod
-    def _multi_ucb(x, target_gp, source_gp_list, kappa):
+    def _multi_ucb(x, target_gp, source_gp_list, kappa, alpha, power=1):
         target_mean, target_std = target_gp.predict(x, return_std=True)
         source_mean_sum = 0
         for source_gp in source_gp_list:
-            source_mean_sum = source_gp.predict(x, return_std=False)
+            source_mean_sum += source_gp.predict(x, return_std=False)
         source_mean_avg = source_mean_sum / len(source_gp_list)
+        return target_mean + source_mean_avg + ((target_mean - source_mean_avg + (alpha * target_std )) * np.exp(-(kappa * target_std)**power))
+
+    @staticmethod
+    def _multi_flat_state(x, target_gp, kappa, alpha, power=1):
+        target_mean, target_std = target_gp.predict(x, return_std=True)
+        return target_mean + 0.5 + ((target_mean - 0.5 + (alpha * target_std )) * np.exp(-(kappa * target_std)**power))
+
+    @staticmethod
+    def _multi_ucb_weighted(x, target_gp, source_gp_list, kappa):
+        target_mean, target_std = target_gp.predict(x, return_std=True)
+        source_mean_sum = 0
+        inverse_std_sum = 0
+        for source_gp in source_gp_list:
+            mean, stdev = source_gp.predict(x, return_std=True)
+            source_mean_sum += mean / stdev
+            inverse_std_sum += 1 / stdev
+        source_mean_avg = source_mean_sum / inverse_std_sum
         return target_mean + source_mean_avg - ((source_mean_avg - target_mean) * np.exp(-(target_std * kappa)))
 
     @staticmethod
@@ -181,9 +244,26 @@ class MultiUtilityFunction(UtilityFunction):
         target_mean, target_std = target_gp.predict(x, return_std=True)
         source_mean_sum = 0
         for source_gp in source_gp_list:
-            source_mean_sum = source_gp.predict(x, return_std=False)
+            source_mean_sum += source_gp.predict(x, return_std=False)
         source_mean_avg = source_mean_sum / len(source_gp_list)
-        return (kappa * target_std * target_mean) + source_mean_avg - ((source_mean_avg - target_mean) * np.exp(-(target_std * kappa)))
+        return target_mean + source_mean_avg - ((source_mean_avg - target_mean) * (np.exp(-(target_std * kappa)) + (kappa * target_std)))
+
+    def update_params(self, gp, y_max, bounds, random_state, percentile):
+        self._iters_counter += 1
+        if type(self._kappa_decay) == str:
+            if self._kappa_decay == 'dynamic':
+                self.kappa = 1 / acq_sigma(gp=gp,
+                                        y_max=y_max,
+                                        bounds=bounds,
+                                        random_state=random_state,
+                                        percentile=percentile)
+
+        if type(self._kappa_decay) == float:
+            if self._iters_counter > self._kappa_decay_delay and self.kappa > self._kappa_min:
+                self.kappa *= self._kappa_decay
+
+        if self._iters_counter > self._alpha_decay_delay and self.alpha > self._alpha_min:
+            self.alpha *= self._alpha_decay
 
 def load_logs(optimizer, logs):
     """Load previous ...

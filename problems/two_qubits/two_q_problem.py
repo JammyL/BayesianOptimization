@@ -1,16 +1,16 @@
 from ..problem import problem
 from .two_q_generators import *
-from qutip.qip.operations import snot
-import qutip as qt
+from numpy import pi
 
+from qutip.qip.operations import snot
 from qutip.qip.circuit import QubitCircuit, Gate
 from qutip.qip.operations import gate_sequence_product
 from qutip.tensor import tensor
 
-pi = 3.141592653589793
+import qutip as qt
 
 spins = []
-for i in range(1, 3):
+for _ in range(2):
     spins.append(qt.basis(2,0))
 initial_state = tensor(spins)
 
@@ -23,11 +23,10 @@ QC.add_gate("RX", targets = 1, arg_value= pi/7)
 U_list = QC.propagators()
 
 TargetGate = gate_sequence_product(U_list)
-TargetState = TargetGate * initial_state
 
 class twoQubitCircuit(problem):
-    def __init__(self, initialState = initial_state, targetGate = TargetGate, configPath='./problems/two_qubits/two_q_config.yaml', verbose=2):
-        targetState = targetGate * initialState
-        testState_list = [N2qubitStateFunc(initialState, targetState)]
+    def __init__(self, initialState_list=[initial_state], targetGate=TargetGate, configPath='./problems/two_qubits/two_q_config.yaml', verbose=2):
+        targetState_list = [targetGate * initialState for initialState in initialState_list]
+        testState_list = [N2qubitStateFunc(initialState_list[i], targetState_list[i]) for i in range(len(initialState_list))]
         testGate = N2qubitGateFunc(targetGate)
         problem.__init__(self, testState_list=testState_list, testGate=testGate, configPath=configPath, verbose=verbose)

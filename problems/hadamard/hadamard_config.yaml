@@ -2,13 +2,18 @@
 # All parameters must be included
 # Extra optimizations can be added as is done in "transfer:"
 # Optimizations must be given a unique name as is done in "transfer:"
+problem: hadamard
+
+input-states:
+  - '0'
+
 state:
   opt-1:
     iters: 30
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1
-    decay-delay: 0
+    kappa-delay: 0
 
 transfer:
   opt-1:
@@ -16,13 +21,13 @@ transfer:
     acq: 'multi_ucb'
     kappa: 2
     kappa-decay: 1
-    decay-delay: 0
+    kappa-delay: 0
   opt-2:
     iters: 33
     acq: 'ucb'
     kappa: 1
     kappa-decay: 0.5
-    decay-delay: 0
+    kappa-delay: 0
     # Refine reduces the search bounds to a box of length twice the value specified here centred on the current maximum
     # Refinement is done BEFORE the optimization in which it is specified
     refine: 0.01
@@ -31,7 +36,7 @@ transfer:
     acq: 'ucb'
     kappa: 0.1
     kappa-decay: 0.5
-    decay-delay: 0
+    kappa-delay: 0
     refine: 0.001
 
 control:
@@ -40,20 +45,20 @@ control:
     acq: 'ucb'
     kappa: 5
     kappa-decay: 0.5
-    decay-delay: 10
+    kappa-delay: 10
   opt-2:
     iters: 20
     acq: 'ucb'
     kappa: 1
     kappa-decay: 0.5
-    decay-delay: 0
+    kappa-delay: 0
     refine: 0.1
   opt-3:
     iters: 50
     acq: 'ucb'
     kappa: 0.1
     kappa-decay: 0.5
-    decay-delay: 0
+    kappa-delay: 0
     refine: 0.01
 
 # Number of initialization iters for state and control optimizers

@@ -1,0 +1,54 @@
+# Parameters for optimization routines
+# Extra optimizations can be added as is done in "transfer:"
+
+problem: three_q
+
+input-states:
+  - '000'
+
+feedback: 0.0
+
+state:
+  opt-1:
+    iters: 160
+    acq: 'ucb'
+    kappa: 10
+    kappa-decay: 0.8
+    kappa-delay: 50
+
+transfer:
+  opt-1:
+    iters: 200
+    acq: 'multi_ucb'
+    kappa: 100
+    kappa-decay: 0.8
+    kappa-delay: 30
+
+# Number of initialization iters for state and control optimizers
+# These values must be the same for state and contorl to keep the testing fair
+state-control-init: 30
+
+transfer-init:
+    iters: 10
+    acq: 'ucb'
+    kappa: 1
+    xi: 0.0
+
+cost:
+  state: 1
+  gate: 8
+
+pbounds:
+  a1:
+    !!python/tuple [0, 3]
+  a2:
+    !!python/tuple [0, 3]
+  a3:
+    !!python/tuple [0, 3]
+  a4:
+    !!python/tuple [0, 3]
+  a5:
+    !!python/tuple [0, 3]
+  a6:
+    !!python/tuple [0, 3]
+

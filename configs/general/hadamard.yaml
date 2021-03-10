@@ -1,0 +1,61 @@
+# Parameters for optimization routines
+# Extra optimizations can be added as is done in "transfer:"
+
+problem: hadamard
+
+input-states:
+  - '0'
+
+state:
+  opt-1:
+    iters: 60
+    acq: 'ucb'
+    kappa: 10
+    kappa-decay: 1.0
+    kappa-delay: 10
+    kappa-min: 1
+
+transfer:
+  opt-1:
+    iters: 100
+    acq: 'multi_ucb'
+    kappa: 100
+    kappa-decay: 1.0
+    kappa-delay: 30
+    kappa-min: 10
+    alpha: 5
+    alpha-decay: 0.8
+    alpha-delay: 10
+    alpha-min: 0
+
+control:
+  opt-1:
+    iters: 130
+    acq: 'ucb'
+    kappa: 20
+    kappa-decay: 0.8
+    kappa-delay: 50
+    kappa-min: 0
+
+# Number of initialization iters for state and control optimizers
+# These values must be the same for state and contorl to keep the testing fair
+state-control-init: 10
+
+transfer-init:
+    iters: 10
+    acq: 'ucb'
+    kappa: 0.1
+    xi: 0.0
+    type:
+      - 'state'
+      # - 'random'
+
+cost:
+  state: 1
+  gate: 2
+
+pbounds:
+  a1:
+    !!python/tuple [-1, 2.5]
+  a2:
+    !!python/tuple [-1.7,1.7]

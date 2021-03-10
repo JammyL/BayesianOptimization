@@ -1,11 +1,11 @@
 from ..problem import problem
 from .three_q_generators import *
+from numpy import pi
 from qutip.qip.operations import snot
-import qutip as qt
-
 from qutip.qip.circuit import QubitCircuit
 from qutip.qip.operations import gate_sequence_product
 from qutip.tensor import tensor
+import qutip as qt
 
 spins = []
 
@@ -26,7 +26,6 @@ QC.add_gate("RX", targets = 1, arg_value= 0.4378)
 U_list = QC.propagators()
 
 TargetGate = gate_sequence_product(U_list)
-TargetState = TargetGate * initial_state
 
 class threeQubitCircuit(problem):
     def __init__(self, initialState_list=[initial_state], targetGate=TargetGate, configPath='./problems/three_qubits/three_q_config.yaml', verbose=2):

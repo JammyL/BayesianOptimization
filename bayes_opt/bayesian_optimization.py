@@ -1,10 +1,12 @@
 import warnings
+import random
 
 from .target_space import TargetSpace
 from .event import Events, DEFAULT_EVENTS
 from .logger import _get_default_logger
 from .util import UtilityFunction, MultiUtilityFunction, acq_max, ensure_rng
 
+from copy import deepcopy
 from dataclasses import dataclass, field
 from sklearn.gaussian_process.kernels import Matern
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -236,6 +238,7 @@ class BayesianOptimization(Observable):
                  kappa=2.576,
                  kappa_decay=1,
                  kappa_decay_delay=0,
+                 kappa_min=0,
                  xi=0.0,
                  **gp_params):
         """
@@ -283,7 +286,8 @@ class BayesianOptimization(Observable):
                                kappa=kappa,
                                xi=xi,
                                kappa_decay=kappa_decay,
-                               kappa_decay_delay=kappa_decay_delay)
+                               kappa_decay_delay=kappa_decay_delay,
+                               kappa_min=kappa_min)
         iteration = 0
         while not self._queue.empty or iteration < n_iter:
             try:
@@ -328,10 +332,11 @@ class BayesianOptimization(Observable):
 class TargetBayesianOptimization(BayesianOptimization):
 
     def __init__(self, f, pbounds, source_bo_list, random_state=None, verbose=2,
-                bounds_transformer=None, cost=0):
+                bounds_transformer=None, cost=1, feedback_param=0.0):
         BayesianOptimization.__init__(self, f, pbounds, random_state, verbose,
                 bounds_transformer, cost)
         self.source_bo_list = source_bo_list
+        self.feedback_param = feedback_param
 
     def maximize(self,
                  init_points=5,
@@ -340,6 +345,12 @@ class TargetBayesianOptimization(BayesianOptimization):
                  kappa=2.576,
                  kappa_decay=1,
                  kappa_decay_delay=0,
+                 kappa_min=0,
+                 alpha=2,
+                 alpha_decay=1,
+                 alpha_decay_delay=0,
+                 alpha_min=0,
+                 power=1,
                  xi=0.0,
                  **gp_params):
         """
@@ -385,30 +396,45 @@ class TargetBayesianOptimization(BayesianOptimization):
 
         util = MultiUtilityFunction(kind=acq,
                                kappa=kappa,
+                               alpha=alpha,
                                xi=xi,
                                source_bo_list = self.source_bo_list,
                                kappa_decay=kappa_decay,
-                               kappa_decay_delay=kappa_decay_delay)
+                               kappa_decay_delay=kappa_decay_delay,
+                               kappa_min=kappa_min,
+                               alpha_decay=alpha_decay,
+                               alpha_decay_delay=alpha_decay_delay,
+                               alpha_min=alpha_min,
+                               power=power)
         iteration = 0
         while not self._queue.empty or iteration < n_iter:
             try:
                 x_probe = next(self._queue)
             except StopIteration:
-                util.update_params()
+                util.update_params(gp=self._gp,
+                            y_max=self._space.target.max(),
+                            bounds=self._space.bounds,
+                            random_state=self._random_state,
+                            percentile=0.000)
+
                 x_probe = self.suggest(util)
                 iteration += 1
             self.probe(x_probe, lazy=False)
+            extra_cost = 0
+            if random.random() < self.feedback_param:
+                for bo in self.source_bo_list:
+                    bo.probe(x_probe, lazy=False)
+                    extra_cost += bo.cost
 
             if self._bounds_transformer:
                 self.set_bounds(
                     self._bounds_transformer.transform(self._space))
-
-            self.data.add_points(self.max['target'], self.max['params'], self.cost)
+            self.data.add_points(self.max['target'], self.max['params'], self.cost + extra_cost)
 
         self.dispatch(Events.OPTIMIZATION_END)
 
     def transferData(self, other_list):
-        self.data = other_list[0].data
+        self.data = deepcopy(other_list[0].data)
         for i in range(len(self.data.cost)):
             self.data.cost[i] *= len(other_list)
         for i in range(len(self.data.bestResult)):

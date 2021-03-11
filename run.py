@@ -11,7 +11,7 @@ import yaml
 
 args = sys.argv[1:]
 if len(args) < 2:
-    configPath = './problems/three_qubits/three_q_config.yaml'
+    configPath = './configs/general/initialization_tests/had_c1.yaml'
     outputPath = 'results_10.pickle'
 else:
     configPath = args[0]
@@ -64,10 +64,11 @@ if len(initial_state_list) == 0 and 'state' in config.keys():
 controlResults = []
 transferResults = []
 
-for i in range(1):
+for i in range(1000):
     try:
         p = problem(initialState_list=initial_state_list, configPath=configPath, verbose=1)
         p.default_opt()
+        p.plot_result()
         tResult, tCost, cResult, cCost = p.get_result()
         if p.ControlOptimizer != None:
             controlResults.append(cResult)

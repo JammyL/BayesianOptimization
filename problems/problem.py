@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tck
 from copy import deepcopy
-from bayes_opt import BayesianOptimization, TargetBayesianOptimization, UtilityFunction, SequentialDomainReductionTransformer
+from bayes_opt import BayesianOptimization, TargetBayesianOptimization, UtilityFunction
 
 def plot_bo(bo, title='', save=False, saveFile='./figures/'):
     #ONLY FOR USE WITH 2D PARAMETER SPACES
@@ -106,7 +106,6 @@ class problem:
                 verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
                 cost=self.config['cost']['gate'],
                 random_state=1,
-                bounds_transformer= self.boundsTransformer
             )
         else:
             self.ControlOptimizer = None

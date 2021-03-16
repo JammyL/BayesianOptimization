@@ -1,56 +1,9 @@
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.ticker as tck
 from copy import deepcopy
 from bayes_opt import BayesianOptimization, TargetBayesianOptimization, UtilityFunction
-
-def plot_bo(bo, title='', save=False, saveFile='./figures/'):
-    #ONLY FOR USE WITH 2D PARAMETER SPACES
-    #i.e f(x,y)
-
-    X, Y = np.mgrid[-1:2.5:1000j, -1.7:1.7:1000j]
-    positions = np.vstack([X.ravel(), Y.ravel()]).T
-    mean, sigma = bo._gp.predict(positions, return_std=True)
-    mean = np.reshape(mean, (-1,1000))
-    sigma = np.reshape(sigma, (-1, 1000))
-    plt.rcParams.update({'font.size': 18})
-
-    fig1 = plt.figure()
-    fig2 = plt.figure()
-    ax1 = fig1.add_subplot(111)
-    ax2 = fig2.add_subplot(111)
-    c1 = ax1.contourf(X/np.pi,Y/np.pi, mean, cmap='bwr', levels = 20)
-    c2 = ax2.contourf(X/np.pi,Y/np.pi, sigma, cmap='bwr', levels = 20)
-    ax1.set_xlim(-1/4, 3/4)
-    ax1.set_ylim(-1/2, 1/2)
-    ax1.set_xticks([-1/4, 0, 1/4, 1/2, 3/4])
-    ax1.set_xticklabels(['-$\pi$/4', '0', '$\pi$/4', '$\pi$/2', '$3\pi$/4'])
-    ax1.set_yticks([-1/2, -1/4, 0, 1/4, 1/2])
-    ax1.set_yticklabels(['-$\pi$/2', '-$\pi$/4', '0', '$\pi$/4', '$\pi$/2'])
-
-    ax2.set_xlim(-1/4, 3/4)
-    ax2.set_ylim(-1/2, 1/2)
-    ax2.set_xticks([-1/4, 0, 1/4, 1/2, 3/4])
-    ax2.set_xticklabels(['-$\pi$/4', '0', '$\pi$/4', '$\pi$/2', '$3\pi$/4'])
-    ax2.set_yticks([-1/2, -1/4, 0, 1/4, 1/2])
-    ax2.set_yticklabels(['-$\pi$/2', '-$\pi$/4', '0', '$\pi$/4', '$\pi$/2'])
-
-
-    plt.colorbar(c1, ax = ax1)
-    plt.colorbar(c2, ax = ax2)
-
-    ax1.set_xlabel('$\phi_1$')
-    ax1.set_ylabel('$\phi_2$')
-    ax2.set_xlabel('$\phi_1$')
-    ax2.set_ylabel('$\phi_2$')
-
-    ax1.set_title(title + ': Mean')
-    ax2.set_title(title + ': Uncertainty')
-
-    if save:
-        fig1.savefig(saveFile + title + "_mean.png", bbox_inches='tight', pad_inches=0.1)
-        fig2.savefig(saveFile + title + "_sigma.png", bbox_inches='tight', pad_inches=0.1)
+from .plotting import plot_bo_1D, plot_bo_2D
 
 def fid_to_infidelity(data):
     return 1 - data
@@ -83,10 +36,6 @@ class problem:
         else:
             self.StateOptimizer_list = []
         if 'transfer' in self.config.keys() and 'state' in self.config.keys():
-            if 'feedback' in self.config.keys():
-                feedback = self.config['feedback']
-            else:
-                feedback = 0.
             self.TransferOptimizer = TargetBayesianOptimization(
                 f=testGate,
                 pbounds=self.config['pbounds'],
@@ -94,7 +43,6 @@ class problem:
                 source_bo_list=self.StateOptimizer_list,
                 cost=self.config['cost']['gate'],
                 random_state=1,
-                feedback_param=feedback,
             )
         else:
             self.TransferOptimizer = None
@@ -201,6 +149,8 @@ class problem:
                     optimization['kappa-delay'] = optimization['decay-delay']
                 if not 'pow' in optimization.keys():
                     optimization['pow'] = 1
+                if not 'feedback' in optimization.keys():
+                    optimization['feedback'] = 0
                 self.TransferOptimizer.maximize(
                     init_points=0,
                     n_iter=optimization['iters'],
@@ -214,6 +164,7 @@ class problem:
                     alpha_decay_delay=optimization['alpha-delay'],
                     alpha_min=optimization['alpha-min'],
                     power=optimization['pow'],
+                    feedback=optimization['feedback']
                 )
 
         if self.ControlOptimizer != None:
@@ -237,16 +188,36 @@ class problem:
 
     def plot_gps(self, stateIndex='all', stateTitle='State', transferTitle='Gate - Transfer',
                 controlTitle='Gate - Standard', show=True, save=False, saveFile='./figures/'):
-
-        if stateIndex == 'all':
-            for i in range(len(self.StateOptimizer_list)):
-                plot_bo(self.StateOptimizer_list[i], stateTitle, save=save, saveFile=saveFile)
-        elif len(self.StateOptimizer_list) > 0:
-            plot_bo(self.StateOptimizer_list[stateIndex], stateTitle, save=save, saveFile=saveFile)
-        if self.TransferOptimizer != None:
-            plot_bo(self.TransferOptimizer, transferTitle, save=save, saveFile=saveFile)
-        if self.ControlOptimizer != None:
-            plot_bo(self.ControlOptimizer, controlTitle, save=save, saveFile=saveFile)
+        if len(self.TransferOptimizer.max['params']) == 1:
+            plt.rcParams.update({'font.size': 12})
+            plot_bo_1D(self.ControlOptimizer, label='UCB', color='r')
+            plot_bo_1D(self.TransferOptimizer, label='Transfer', color='b')
+            x = np.linspace(0, 3*np.pi, 1000)
+            plt.grid(linestyle='--')
+            plt.plot(x, self.testGate(x), label='$-\sin(x)$ - Target Task', color='g')
+            plt.plot(x, self.testState_list[0](x), label='$\sin(x)^2$ - Source Task', color='orange')
+            plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi, 5*np.pi/2, 3*np.pi],
+                        ['0', '$\pi$/2', '$\pi$', '$3\pi$/2', '$2\pi$', '$5\pi$/2', '$3\pi$'])
+            plt.xlim(0, 3*np.pi)
+            plt.xlabel('$x$')
+            plt.ylabel('$f(x)$')
+            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            if save:
+                plt.savefig(saveFile, bbox_inches='tight', pad_inches=0.1)
+        elif len(self.TransferOptimizer.max['params']) == 2:
+            if stateIndex == 'all':
+                for i in range(len(self.StateOptimizer_list)):
+                    plot_bo_2D(self.StateOptimizer_list[i], stateTitle, save=save, saveFile=saveFile)
+            elif len(self.StateOptimizer_list) > 0:
+                plot_bo_2D(self.StateOptimizer_list[stateIndex], stateTitle, save=save, saveFile=saveFile)
+            else:
+                raise Exception("Invalid stateIndex: {}, please choose 'all' or an interger".format(stateIndex))
+            if self.TransferOptimizer != None:
+                plot_bo_2D(self.TransferOptimizer, transferTitle, save=save, saveFile=saveFile)
+            if self.ControlOptimizer != None:
+                plot_bo_2D(self.ControlOptimizer, controlTitle, save=save, saveFile=saveFile)
+        else:
+            raise Exception("Cannot plot {}D probelm. Please enter a 1D or 2D problem".format(len(self.TransferOptimizer.max['params'])))
         if show:
             plt.show()
 
@@ -274,14 +245,13 @@ class problem:
 
     def plot_result(self, title='', show=True, save=False, saveFile='./figures/infidelity.png'):
         cost = self.config['cost']
-        if self.StateOptimizer_list != []:
-            totalStateIters = self.config['state-control-init']
+        if self.StateOptimizer_list != [] and self.TransferOptimizer != None:
+            transferStart = 0
             for optimization in self.config['state'].values():
-                totalStateIters += optimization['iters']
-            totalStateIters += self.config['transfer-init']['iters'] * len(self.config['transfer-init']['type']) \
-                * (self.config['cost']['gate'] + (self.config['cost']['state']))
-        if self.TransferOptimizer != None:
-            transferPoint = totalStateIters * cost['state'] * len(self.StateOptimizer_list)
+                transferStart += (optimization['iters'] + self.config['state-control-init']) * self.config['cost']['state'] \
+                    * len(self.config['input-states'])
+            transferEnd = transferStart + (self.config['transfer-init']['iters'] * len(self.config['transfer-init']['type']) \
+                * (self.config['cost']['gate'] + (self.config['cost']['state'])))
 
         transferResult, transferCosts, controlResult, controlCosts = self.get_result()
 
@@ -289,7 +259,8 @@ class problem:
         ax = fig.add_subplot(111)
         if transferCosts != None:
             ax.plot(transferCosts, transferResult, label='With Transfer', color='b')
-            ax.axvline(x=transferPoint, color='g', linestyle='--', label='Transfer Point')
+            ax.axvline(x=transferStart, color='g', linestyle='--', label='Transfer Start')
+            ax.axvline(x=transferEnd, color='orange', linestyle='--', label='Transfer End')
         if controlCosts != None:
             ax.plot(controlCosts, controlResult, label='No Transfer', color='r')
         ax.set_xlabel('Cost')

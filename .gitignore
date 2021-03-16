@@ -9,7 +9,10 @@ scratch/
 bo_eg*.png
 gif/
 sandbox.py
-
+results.py
+config.yaml
+*.png
+*.pickle
 # Unit test / coverage reports
 htmlcov/
 .tox/

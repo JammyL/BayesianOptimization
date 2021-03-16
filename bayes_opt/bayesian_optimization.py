@@ -332,11 +332,10 @@ class BayesianOptimization(Observable):
 class TargetBayesianOptimization(BayesianOptimization):
 
     def __init__(self, f, pbounds, source_bo_list, random_state=None, verbose=2,
-                bounds_transformer=None, cost=1, feedback_param=0.0):
+                bounds_transformer=None, cost=1):
         BayesianOptimization.__init__(self, f, pbounds, random_state, verbose,
                 bounds_transformer, cost)
         self.source_bo_list = source_bo_list
-        self.feedback_param = feedback_param
 
     def maximize(self,
                  init_points=5,
@@ -352,6 +351,7 @@ class TargetBayesianOptimization(BayesianOptimization):
                  alpha_min=0,
                  power=1,
                  xi=0.0,
+                 feedback=0.,
                  **gp_params):
         """
         Probes the target space to find the parameters that yield the maximum
@@ -421,7 +421,7 @@ class TargetBayesianOptimization(BayesianOptimization):
                 iteration += 1
             self.probe(x_probe, lazy=False)
             extra_cost = 0
-            if random.random() < self.feedback_param:
+            if random.random() < feedback:
                 for bo in self.source_bo_list:
                     bo.probe(x_probe, lazy=False)
                     extra_cost += bo.cost

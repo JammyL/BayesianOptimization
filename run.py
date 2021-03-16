@@ -1,4 +1,4 @@
-from problems import hadamard, hadamardRandomState, twoQubitCircuit, threeQubitCircuit, threeQubitCircuitYZ
+from problems import hadamard, hadamardRandomState, twoQubitCircuit, threeQubitCircuit, threeQubitCircuitYZ, sinusoid
 from qutip.qip.operations import snot
 from qutip.tensor import tensor
 from qutip.random_objects import rand_ket
@@ -13,9 +13,11 @@ args = sys.argv[1:]
 if len(args) < 2:
     configPath = './problems/three_qubits/three_q_config.yaml'
     outputPath = 'results_10.pickle'
+    n_repeats = 1
 else:
     configPath = args[0]
     outputPath = args[1]
+    n_repeats = args[2]
 
 with open(configPath) as file:
     # The FullLoader parameter handles the conversion from YAML
@@ -28,6 +30,7 @@ problem_dict = {
     'two_q': twoQubitCircuit,
     'three_q': threeQubitCircuit,
     'three_q_yz': threeQubitCircuitYZ,
+    'sinusoid': sinusoid,
 }
 
 if 'problem' in config.keys():

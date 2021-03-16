@@ -4,6 +4,7 @@ from .hadamard_random_state.hadamard_random_state_problem import hadamardRandomS
 from .two_qubits.two_q_problem import twoQubitCircuit
 from .three_qubits.three_q_problem import threeQubitCircuit
 from .three_qubits_yz.three_q_yz_problem import threeQubitCircuitYZ
+from .sinusoid.sinusoid_problem import sinusoid
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "twoQubitCircuit",
     "threeQubitCircuit",
     "threeQubitCircuitYZ",
+    "sinusoid",
 ]

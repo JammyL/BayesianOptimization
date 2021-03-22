@@ -56,26 +56,31 @@ class problem:
             )
         else:
             self.ControlOptimizer = None
+        if 'state-control-init' in self.config.keys():
+            self.config['state-init'] = self.config['state-control-init']
+            self.config['control-init'] = self.config['state-control-init']
 
     def default_opt(self):
         pbounds = self.config['pbounds']
         params = pbounds.keys()
         initPoints = []
+        stateIters = len(self.StateOptimizer_list) * self.config['state-init']
+        controlIters = self.config['control-init']
         for p in params:
-            initPoints.append(np.random.uniform(low=pbounds[p][0], high=pbounds[p][1], size=self.config['state-control-init']))
-        for i in range(self.config['state-control-init']):
+            initPoints.append(np.random.uniform(low=pbounds[p][0], high=pbounds[p][1], size=max(stateIters, controlIters)))
+        for i in range(max(stateIters, controlIters)):
             newPoint = {}
             j = 0
             for p in params:
                 newPoint[p] = initPoints[j][i]
                 j += 1
             gateTarget = self.testGate(**newPoint)
-            if self.StateOptimizer_list != []:
-                for k in range(len(self.testState_list)):
-                    stateTarget = self.testState_list[k](**newPoint)
-                    self.StateOptimizer_list[k].register(newPoint, stateTarget)
+            if self.StateOptimizer_list != [] and i < stateIters:
+                stateIndex = i % len(self.StateOptimizer_list)
+                stateTarget = self.testState_list[stateIndex](**newPoint)
+                self.StateOptimizer_list[stateIndex].register(newPoint, stateTarget)
 
-            if self.ControlOptimizer != None:
+            if self.ControlOptimizer != None and i < controlIters:
                 self.ControlOptimizer.register(newPoint, gateTarget)
 
         for StateOptimizer in self.StateOptimizer_list:
@@ -248,7 +253,7 @@ class problem:
         if self.StateOptimizer_list != [] and self.TransferOptimizer != None:
             transferStart = 0
             for optimization in self.config['state'].values():
-                transferStart += (optimization['iters'] + self.config['state-control-init']) * self.config['cost']['state'] \
+                transferStart += (optimization['iters'] + self.config['state-init']) * self.config['cost']['state'] \
                     * len(self.config['input-states'])
             transferEnd = transferStart + (self.config['transfer-init']['iters'] * len(self.config['transfer-init']['type']) \
                 * (self.config['cost']['gate'] + (self.config['cost']['state'])))

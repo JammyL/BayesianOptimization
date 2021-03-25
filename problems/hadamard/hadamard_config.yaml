@@ -63,11 +63,11 @@ control:
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
-state-control-init: 20
+state-control-init: 25
 
 # Initialisation for the transfer routine
 transfer-init:
-    iters: 5
+    iters: 25
     acq: 'ucb'
     kappa: 1
     xi: 0.0

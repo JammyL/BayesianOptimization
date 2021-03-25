@@ -11,7 +11,7 @@ import yaml
 
 args = sys.argv[1:]
 if len(args) < 2:
-    configPath = './configs/general/initialization_tests/had_c1.yaml'
+    configPath = './configs/three_q/general_tests/3q_c1.yaml'
     outputPath = 'results_10.pickle'
 else:
     configPath = args[0]

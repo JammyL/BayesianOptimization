@@ -11,7 +11,7 @@ import yaml
 
 args = sys.argv[1:]
 if len(args) < 2:
-    configPath = './configs/general/hadamard_great.yaml'
+    configPath = './configs/general/three_q.yaml'
     outputPath = 'results_10.pickle'
 else:
     configPath = args[0]
@@ -68,7 +68,6 @@ for i in range(1000):
     try:
         p = problem(initialState_list=initial_state_list, configPath=configPath, verbose=1)
         p.default_opt()
-        p.plot_result()
         tResult, tCost, cResult, cCost = p.get_result()
         if p.ControlOptimizer != None:
             controlResults.append(cResult)

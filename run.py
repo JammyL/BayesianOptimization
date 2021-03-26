@@ -64,7 +64,7 @@ if len(initial_state_list) == 0 and 'state' in config.keys():
 controlResults = []
 transferResults = []
 
-for i in range(1000):
+for i in range(1):
     try:
         p = problem(initialState_list=initial_state_list, configPath=configPath, verbose=1)
         p.default_opt()

@@ -1,10 +1,10 @@
 # Parameters for optimization routines
 # Extra optimizations can be added as is done in "transfer:"
 
-problem: two_q
+problem: three_q
 
 input-states:
-  - '00'
+  - '000'
 
 state:
   opt-1:
@@ -53,7 +53,7 @@ transfer-init:
 
 cost:
   state: 1
-  gate: 4
+  gate: 8
 
 pbounds:
   a1:

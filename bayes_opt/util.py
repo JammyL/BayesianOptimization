@@ -133,6 +133,7 @@ class UtilityFunction(object):
 
         if self._kappa_decay < 1 and self._iters_counter > self._kappa_decay_delay and self.kappa > self._kappa_min:
             self.kappa *= self._kappa_decay
+            self.xi *= self._kappa_decay
 
     def utility(self, x, gp, y_max):
         if self.kind == 'ucb':

@@ -8,29 +8,36 @@ input-states:
 
 state:
   opt-1:
-    iters: 60
+    iters: 20
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1.0
-    kappa-delay: 10
-    kappa-min: 1
+    kappa-delay: 20
+    kappa-min: 0
 
 transfer:
   opt-1:
-    iters: 100
+    iters: 20
     acq: 'multi_ucb'
     kappa: 100
-    kappa-decay: 1.0
-    kappa-delay: 30
-    kappa-min: 10
-    alpha: 5
+    kappa-decay: 0
+    kappa-delay: 15
+    kappa-min: 0
+    alpha: 10
     alpha-decay: 0.8
     alpha-delay: 10
     alpha-min: 0
+    pow: 2
+  opt-2:
+    iters: 150
+    acq: 'ucb'
+    kappa: 10
+    kappa-decay: 0.8
+    kappa-delay: 30
 
 control:
   opt-1:
-    iters: 130
+    iters: 200
     acq: 'ucb'
     kappa: 20
     kappa-decay: 0.8
@@ -42,7 +49,7 @@ control:
 state-control-init: 10
 
 transfer-init:
-    iters: 10
+    iters: 5
     acq: 'ucb'
     kappa: 0.1
     xi: 0.0

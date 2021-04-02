@@ -8,7 +8,7 @@ input-states:
 
 state:
   opt-1:
-    iters: 20
+    iters: 30
     acq: 'ucb'
     kappa: 10
     kappa-decay: 0.8
@@ -17,39 +17,45 @@ state:
 
 transfer:
   opt-1:
-    iters: 200
+    iters: 40
     acq: 'multi_ucb'
     kappa: 100
     kappa-decay: 1.0
     kappa-delay: 30
     kappa-min: 0
-    alpha: 100
+    alpha: 10
     alpha-decay: 0.8
-    alpha-delay: 40
+    alpha-delay: 30
     alpha-min: 0
     pow: 2
+  opt-2:
+    iters: 130
+    acq: 'ucb'
+    kappa: 0.2
+    kappa-decay: 0.8
+    kappa-delay: 50
+    kappa-min: 0
 
 control:
   opt-1:
     iters: 200
     acq: 'ucb'
-    kappa: 20
+    kappa: 10
     kappa-decay: 0.8
-    kappa-delay: 100
+    kappa-delay: 50
     kappa-min: 0
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
-state-control-init: 10
+state-control-init: 50
 
 transfer-init:
-    iters: 10
+    iters: 20
     acq: 'ucb'
-    kappa: 0.1
+    kappa: 0.5
     xi: 0.0
     type:
       - 'state'
-      # - 'random'
 
 cost:
   state: 1

@@ -92,6 +92,8 @@ class problem:
                     optimization['kappa-min'] = 0
                 if 'decay-delay' in optimization.keys() and 'kappa-delay' not in optimization.keys():
                     optimization['kappa-delay'] = optimization['decay-delay']
+                if 'xi' not in optimization.keys():
+                    optimization['xi'] = 0
                 StateOptimizer.maximize(
                     init_points=0,
                     n_iter=optimization['iters'],
@@ -100,6 +102,7 @@ class problem:
                     kappa_decay=optimization['kappa-decay'],
                     kappa_decay_delay=optimization['kappa-delay'],
                     kappa_min=optimization['kappa-min'],
+                    xi=optimization['xi'],
                 )
 
         if self.TransferOptimizer != None:
@@ -156,6 +159,8 @@ class problem:
                     optimization['pow'] = 1
                 if not 'feedback' in optimization.keys():
                     optimization['feedback'] = 0
+                if 'xi' not in optimization.keys():
+                    optimization['xi'] = 0
                 self.TransferOptimizer.maximize(
                     init_points=0,
                     n_iter=optimization['iters'],
@@ -164,6 +169,7 @@ class problem:
                     kappa_decay=optimization['kappa-decay'],
                     kappa_decay_delay=optimization['kappa-delay'],
                     kappa_min=optimization['kappa-min'],
+                    xi=optimization['xi'],
                     alpha=optimization['alpha'],
                     alpha_decay=optimization['alpha-decay'],
                     alpha_decay_delay=optimization['alpha-delay'],
@@ -181,6 +187,8 @@ class problem:
                     optimization['kappa-min'] = 0
                 if 'decay-delay' in optimization.keys() and 'kappa-delay' not in optimization.keys():
                     optimization['kappa-delay'] = optimization['decay-delay']
+                if 'xi' not in optimization.keys():
+                    optimization['xi'] = 0
                 self.ControlOptimizer.maximize(
                     init_points=0,
                     n_iter=optimization['iters'],
@@ -189,24 +197,28 @@ class problem:
                     kappa_decay=optimization['kappa-decay'],
                     kappa_decay_delay=optimization['kappa-delay'],
                     kappa_min=optimization['kappa-min'],
+                    xi=optimization['xi']
                 )
 
     def plot_gps(self, stateIndex='all', stateTitle='State', transferTitle='Gate - Transfer',
                 controlTitle='Gate - Standard', show=True, save=False, saveFile='./figures/'):
         if len(self.TransferOptimizer.max['params']) == 1:
-            plt.rcParams.update({'font.size': 12})
-            plot_bo_1D(self.ControlOptimizer, label='UCB', color='r')
-            plot_bo_1D(self.TransferOptimizer, label='Transfer', color='b')
+            plt.rcParams["figure.figsize"] = (12, 7)
+            plt.rcParams.update({'font.size': 22})
             x = np.linspace(0, 3*np.pi, 1000)
             plt.grid(linestyle='--')
-            plt.plot(x, self.testGate(x), label='$-\sin(x)$ - Target Task', color='g')
-            plt.plot(x, self.testState_list[0](x), label='$\sin(x)^2$ - Source Task', color='orange')
+            p3, = plt.plot(x, self.testState_list[0](x), label='$\sin(\phi)^2$ - Source Task', color='g', linewidth=3.0, linestyle='--')
+            p1 = plot_bo_1D(self.ControlOptimizer, label='Standard BO', color='r')
+            p2 = plot_bo_1D(self.TransferOptimizer, label='Transfer Learning', color='b')
+            p4, = plt.plot(x, self.testGate(x), label='$-\sin(\phi)$ - Target Task', color='orange', linewidth=3.0, linestyle='--')
             plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi, 5*np.pi/2, 3*np.pi],
                         ['0', '$\pi$/2', '$\pi$', '$3\pi$/2', '$2\pi$', '$5\pi$/2', '$3\pi$'])
             plt.xlim(0, 3*np.pi)
-            plt.xlabel('$x$')
-            plt.ylabel('$f(x)$')
-            plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.ylim(-1.5, 1.5)
+            plt.xlabel('$\phi$')
+            plt.ylabel('$F(\phi)$', loc='top', rotation=0, fontsize=22)
+            plt.legend([p1, p2, p3, p4], ['Standard BO', 'Transfer Learning', '$\sin(\phi)^2$ - Source Task', '$-\sin(\phi)$ - Target Task'],
+                                         bbox_to_anchor=(1.05, 1), loc='upper left')
             if save:
                 plt.savefig(saveFile, bbox_inches='tight', pad_inches=0.1)
         elif len(self.TransferOptimizer.max['params']) == 2:
@@ -264,8 +276,7 @@ class problem:
         ax = fig.add_subplot(111)
         if transferCosts != None:
             ax.plot(transferCosts, transferResult, label='With Transfer', color='b')
-            ax.axvline(x=transferStart, color='g', linestyle='--', label='Transfer Start')
-            ax.axvline(x=transferEnd, color='orange', linestyle='--', label='Transfer End')
+            ax.axvline(x=transferEnd, color='orange', linestyle='--', label='Transfer Point')
         if controlCosts != None:
             ax.plot(controlCosts, controlResult, label='No Transfer', color='r')
         ax.set_xlabel('Cost')

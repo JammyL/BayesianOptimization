@@ -3,12 +3,14 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as tck
 
 def plot_bo_1D(bo, label='Default Label', color='r'):
+    plt.rc('font',family='Arial')
     x = np.linspace(0, 3*np.pi, 10000)
     mean, sigma = bo._gp.predict(x.reshape(-1, 1), return_std=True)
 
-    plt.plot(x, mean, label=label, color=color)
-    plt.fill_between(x, mean + sigma, mean - sigma, alpha=0.1, color=color)
-    plt.scatter(bo.space.params.flatten(), bo.space.target, c=color, s=30, zorder=10)
+    p, = plt.plot(x, mean, label=label, color=color, linewidth=2.0)
+    plt.fill_between(x, mean + sigma, mean - sigma, alpha=0.15, color=color)
+    plt.scatter(bo.space.params.flatten()[:-1], bo.space.target[:-1], c=color, s=60, zorder=10)
+    return p
 
 def plot_bo_2D(bo, title='', save=False, saveFile='./figures/'):
     #ONLY FOR USE WITH 2D PARAMETER SPACES

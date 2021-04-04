@@ -57,6 +57,12 @@ for state in input_states:
             qubit_list.append(qt.basis(2,0))
         elif qubit == '1':
             qubit_list.append(qt.basis(2,1))
+        elif qubit == 'L':
+            left = (qt.basis(2,0) - (1j * qt.basis(2,1))) / np.sqrt(2)
+            qubit_list.append(left)
+        elif qubit == 'R':
+            right = (qt.basis(2,0) + (1j * qt.basis(2,1))) / np.sqrt(2)
+            qubit_list.append(right)
         else:
             raise Exception("Invalid qubit choice: %s, please choose '0', '1', '+', or '-'".format(qubit))
     initial_state_list.append(tensor(qubit_list))
@@ -67,9 +73,16 @@ if len(initial_state_list) == 0 and 'state' in config.keys():
 controlResults = []
 transferResults = []
 
-for i in range(n_repeats):
+if 'unitary-noise' in config.keys():
+    unitaryNoise = config['unitary-noise']
+else:
+    unitaryNoise = 0
+
+# print(initial_state_list[0])
+
+for i in range(int(n_repeats)):
     try:
-        p = problem(initialState_list=initial_state_list, configPath=configPath, verbose=1)
+        p = problem(initialState_list=initial_state_list, epsilon=unitaryNoise, configPath=configPath, verbose=2)
         p.default_opt()
         tResult, tCost, cResult, cCost = p.get_result()
         if p.ControlOptimizer != None:

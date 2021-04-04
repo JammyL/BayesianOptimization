@@ -118,13 +118,13 @@ class BayesianOptimization(Observable):
         Allows changing the lower and upper searching bounds
     """
     def __init__(self, f, pbounds, random_state=None, verbose=2,
-                 bounds_transformer=None, cost=0):
+                 bounds_transformer=None, cost=0, m_noise=0., fbounds=(None, None), u_noise_f=None):
         self._random_state = ensure_rng(random_state)
 
         self._data = data()
         # Data structure containing the function to be optimized, the bounds of
         # its domain, and a record of the evaluations we have done so far
-        self._space = TargetSpace(f, pbounds, random_state)
+        self._space = TargetSpace(f, pbounds, random_state, m_noise, fbounds[0], fbounds[1], u_noise_f)
 
         self._queue = Queue()
 
@@ -332,9 +332,9 @@ class BayesianOptimization(Observable):
 class TargetBayesianOptimization(BayesianOptimization):
 
     def __init__(self, f, pbounds, source_bo_list, random_state=None, verbose=2,
-                bounds_transformer=None, cost=1):
+                bounds_transformer=None, cost=1, m_noise=0., fbounds=(None, None), u_noise_f=None):
         BayesianOptimization.__init__(self, f, pbounds, random_state, verbose,
-                bounds_transformer, cost)
+                bounds_transformer, cost, m_noise, fbounds, u_noise_f)
         self.source_bo_list = source_bo_list
 
     def maximize(self,
@@ -433,9 +433,9 @@ class TargetBayesianOptimization(BayesianOptimization):
 
         self.dispatch(Events.OPTIMIZATION_END)
 
-    def transferData(self, other_list):
+    def transferData(self, other_list, init_iters):
         self.data = deepcopy(other_list[0].data)
-        for i in range(len(self.data.cost)):
-            self.data.cost[i] *= len(other_list)
+        for i in range(init_iters, len(self.data.cost)):
+            self.data.cost[i] = self.data.cost[i-1] + len(other_list)
         for i in range(len(self.data.bestResult)):
             self.data.bestResult[i] = self._space.target_func(**(self.data.bestPoints[i]))

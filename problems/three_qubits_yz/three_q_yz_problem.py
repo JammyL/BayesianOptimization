@@ -28,8 +28,8 @@ U_list = QC.propagators()
 TargetGate = gate_sequence_product(U_list)
 
 class threeQubitCircuitYZ(problem):
-    def __init__(self, initialState_list=[initial_state], targetGate=TargetGate, configPath='./problems/three_qubits/three_q_config.yaml', verbose=2):
+    def __init__(self, initialState_list=[initial_state], targetGate=TargetGate, epsilon=0, configPath='./problems/three_qubits/three_q_config.yaml', verbose=2):
         targetState_list = [targetGate * initialState for initialState in initialState_list]
-        testState_list = [N3qubitStateFunc(initialState_list[i], targetState_list[i]) for i in range(len(initialState_list))]
-        testGate = N3qubitGateFunc(targetGate)
+        testState_list = [N3qubitStateFunc(initialState_list[i], targetState_list[i], epsilon) for i in range(len(initialState_list))]
+        testGate = N3qubitGateFunc(targetGate, epsilon)
         problem.__init__(self, testState_list=testState_list, testGate=testGate, configPath=configPath, verbose=verbose)

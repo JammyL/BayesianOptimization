@@ -22,7 +22,7 @@ class TargetSpace(object):
     >>> y = space.register_point(x)
     >>> assert self.max_point()['max_val'] == y
     """
-    def __init__(self, target_func, pbounds, random_state=None):
+    def __init__(self, target_func, pbounds, random_state=None, m_noise=0., lower_bound=None, upper_bound=None, u_noise_func=None):
         """
         Parameters
         ----------
@@ -39,7 +39,24 @@ class TargetSpace(object):
         self.random_state = ensure_rng(random_state)
 
         # The function to be optimized
-        self.target_func = target_func
+        if u_noise_func == None:
+            self.target_func = target_func
+            self.pure_func = target_func
+        else:
+            self.target_func = u_noise_func
+            self.pure_func = target_func
+
+        # Any noise associated with the target function and it's limits
+        self.noise = m_noise
+        if upper_bound == None:
+            self.upper_bound = np.inf
+        else:
+            self.upper_bound = upper_bound
+
+        if lower_bound == None:
+            self.lower_bound = -np.inf
+        else:
+            self.lower_bound = lower_bound
 
         # Get the name of the parameters
         self._keys = sorted(pbounds)
@@ -160,6 +177,11 @@ class TargetSpace(object):
         if x in self:
             raise KeyError('Data point {} is not unique'.format(x))
 
+        measurement_noise = np.random.normal(0, self.noise, 1)
+        target += measurement_noise[0]
+        target = max(self.lower_bound, target)
+        target = min(self.upper_bound, target)
+
         # Insert data into unique dictionary
         self._cache[_hashable(x.ravel())] = target
 
@@ -193,6 +215,11 @@ class TargetSpace(object):
             params = dict(zip(self._keys, x))
             target = self.target_func(**params)
             self.register(x, target)
+
+        measurement_noise = np.random.normal(0, self.noise, 1)
+        target += measurement_noise[0]
+        target = max(self.lower_bound, target)
+        target = min(self.upper_bound, target)
         return target
 
     def random_sample(self):
@@ -221,11 +248,11 @@ class TargetSpace(object):
     def max(self):
         """Get maximum target value found and corresponding parametes."""
         try:
+            params = dict(zip(self.keys, self.params[self.target.argmax()]))
+            target = self.pure_func(**params)
             res = {
-                'target': self.target.max(),
-                'params': dict(
-                    zip(self.keys, self.params[self.target.argmax()])
-                )
+                'target': target,
+                'params': params,
             }
         except ValueError:
             res = {}

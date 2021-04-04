@@ -13,8 +13,8 @@ def no_change(data):
 
 class problem:
     def __init__(self, testState_list, testGate, configPath='./problems/default_config.yaml', verbose=2):
-        self.testState_list = testState_list
-        self.testGate = testGate
+        self.testState_list = [testState[1] for testState in testState_list]
+        self.testGate = testGate[1]
         with open(configPath) as file:
             # The FullLoader parameter handles the conversion from YAML
             # scalar values to Python the dictionary format
@@ -22,37 +22,50 @@ class problem:
         if 'transfer-init' in self.config.keys():
             if not 'type' in self.config['transfer-init'].keys():
                 self.config['transfer-init']['type'] = 'state'
+        if 'fbounds' not in self.config.keys():
+            self.config['fbounds'] = (None, None)
+        if 'noise' not in self.config.keys():
+            self.config['noise'] = 0.
 
         # Primary State Optimizer is the first in the list
         # Data will be transfered from this optimizer
         if 'state' in self.config.keys():
             self.StateOptimizer_list = [BayesianOptimization(
-                f=testState,
+                f=testState[0],
                 pbounds=self.config['pbounds'],
                 verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
                 cost=self.config['cost']['state'],
                 random_state=1,
+                m_noise=self.config['noise'],
+                fbounds=self.config['fbounds'],
+                u_noise_f=testState[1],
             ) for testState in testState_list]
         else:
             self.StateOptimizer_list = []
         if 'transfer' in self.config.keys() and 'state' in self.config.keys():
             self.TransferOptimizer = TargetBayesianOptimization(
-                f=testGate,
+                f=testGate[0],
                 pbounds=self.config['pbounds'],
                 verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
                 source_bo_list=self.StateOptimizer_list,
                 cost=self.config['cost']['gate'],
                 random_state=1,
+                m_noise=self.config['noise'],
+                fbounds=self.config['fbounds'],
+                u_noise_f=testGate[1],
             )
         else:
             self.TransferOptimizer = None
         if 'control' in self.config.keys():
             self.ControlOptimizer = BayesianOptimization(
-                f=testGate,
+                f=testGate[0],
                 pbounds=self.config['pbounds'],
                 verbose=verbose, # verbose = 1 prints only when a maximum is observed, verbose = 0 is silent
                 cost=self.config['cost']['gate'],
                 random_state=1,
+                m_noise=self.config['noise'],
+                fbounds=self.config['fbounds'],
+                u_noise_f=testGate[1],
             )
         else:
             self.ControlOptimizer = None
@@ -106,7 +119,7 @@ class problem:
                 )
 
         if self.TransferOptimizer != None:
-            self.TransferOptimizer.transferData(self.StateOptimizer_list)
+            self.TransferOptimizer.transferData(self.StateOptimizer_list, self.config['state-init'])
             transferInit = self.config['transfer-init']
             pbounds = self.config['pbounds']
             params = pbounds.keys()

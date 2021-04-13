@@ -1,6 +1,6 @@
 # Parameters for optimization routines
 # Extra optimizations can be added as is done in "transfer:"
-problem: hadamard
+problem: two_q
 
 control:
   opt-1:

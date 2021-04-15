@@ -1,4 +1,4 @@
-from problems import hadamard, hadamardRandomState, twoQubitCircuit, threeQubitCircuit, threeQubitCircuitYZ
+from problems import hadamard, hadamardRandomState, twoQubitCircuit, threeQubitCircuit, threeQubitCircuitYZ, oneQubitCircuit
 from qutip.qip.operations import snot
 from qutip.tensor import tensor
 from qutip.random_objects import rand_ket
@@ -11,7 +11,9 @@ import yaml
 
 args = sys.argv[1:]
 if len(args) < 2:
-    configPath = './configs/three_q/general_tests/3q_c1.yaml'
+    #configPath = './configs/three_q/general_tests/3q_c1.yaml'
+    configPath = './problems/one_qubit_1/one_q_config.yaml'
+    #configPath = './configs/general/hadamard_great.yaml'
     outputPath = 'results_10.pickle'
 else:
     configPath = args[0]
@@ -28,6 +30,7 @@ problem_dict = {
     'two_q': twoQubitCircuit,
     'three_q': threeQubitCircuit,
     'three_q_yz': threeQubitCircuitYZ,
+    'one_q_1': oneQubitCircuit
 }
 
 if 'problem' in config.keys():
@@ -68,6 +71,7 @@ for i in range(1000):
     try:
         p = problem(initialState_list=initial_state_list, configPath=configPath, verbose=1)
         p.default_opt()
+        p.plot_result()
         tResult, tCost, cResult, cCost = p.get_result()
         if p.ControlOptimizer != None:
             controlResults.append(cResult)

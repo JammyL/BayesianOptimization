@@ -12,8 +12,8 @@ import yaml
 args = sys.argv[1:]
 if len(args) < 2:
     #configPath = './configs/three_q/general_tests/3q_c1.yaml'
-    configPath = './problems/one_qubit_1/one_q_config.yaml'
-    #configPath = './configs/general/hadamard_great.yaml'
+    #configPath = './problems/one_qubit_1/one_q_config.yaml'
+    configPath = './configs/general/hadamard_great.yaml'
     outputPath = 'results_10.pickle'
 else:
     configPath = args[0]
@@ -57,6 +57,10 @@ for state in input_states:
             qubit_list.append(qt.basis(2,0))
         elif qubit == '1':
             qubit_list.append(qt.basis(2,1))
+        elif qubit == 'R':
+            qubit_list.append(qt.basis(2,0)*1/np.sqrt(2) + qt.basis(2,1)*1j/np.sqrt(2))
+        elif qubit == 'L':
+            qubit_list.append(qt.basis(2,0)*1/np.sqrt(2) - qt.basis(2,1)*1j/np.sqrt(2))
         else:
             raise Exception("Invalid qubit choice: %s, please choose '0', '1', '+', or '-'".format(qubit))
     initial_state_list.append(tensor(qubit_list))
@@ -67,11 +71,12 @@ if len(initial_state_list) == 0 and 'state' in config.keys():
 controlResults = []
 transferResults = []
 
-for i in range(1000):
+for i in range(63):
     try:
         p = problem(initialState_list=initial_state_list, configPath=configPath, verbose=1)
         p.default_opt()
-        p.plot_result()
+        #p.plot_result()
+        #p.plot_gps(save=True)
         tResult, tCost, cResult, cCost = p.get_result()
         if p.ControlOptimizer != None:
             controlResults.append(cResult)

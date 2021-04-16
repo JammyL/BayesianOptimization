@@ -5,6 +5,9 @@ import matplotlib.ticker as tck
 from copy import deepcopy
 from bayes_opt import BayesianOptimization, TargetBayesianOptimization, UtilityFunction
 
+plt.rc('font', family = 'serif', serif = 'cmr10')
+plt.rcParams['mathtext.fontset'] = 'cm' #fonts set such as to be similar to the one in the document
+
 def plot_bo(bo, title='', save=False, saveFile='./figures/'):
     #ONLY FOR USE WITH 2D PARAMETER SPACES
     #i.e f(x,y)
@@ -15,13 +18,15 @@ def plot_bo(bo, title='', save=False, saveFile='./figures/'):
     mean = np.reshape(mean, (-1,1000))
     sigma = np.reshape(sigma, (-1, 1000))
     plt.rcParams.update({'font.size': 18})
+    plt.rc('font', family = 'serif', serif = 'cmr10')
+    plt.rcParams['mathtext.fontset'] = 'cm' #fonts set such as to be similar to the one in the document
 
     fig1 = plt.figure()
     fig2 = plt.figure()
     ax1 = fig1.add_subplot(111)
     ax2 = fig2.add_subplot(111)
-    c1 = ax1.contourf(X/np.pi,Y/np.pi, mean, cmap='bwr', levels = 20)
-    c2 = ax2.contourf(X/np.pi,Y/np.pi, sigma, cmap='bwr', levels = 20)
+    c1 = ax1.contourf(X/np.pi,Y/np.pi, mean, cmap='binary', levels = 20)
+    c2 = ax2.contourf(X/np.pi,Y/np.pi, sigma, cmap='binary', levels = 20)
     ax1.set_xlim(-1/4, 3/4)
     ax1.set_ylim(-1/2, 1/2)
     ax1.set_xticks([-1/4, 0, 1/4, 1/2, 3/4])
@@ -302,5 +307,3 @@ class problem:
             plt.savefig(saveFile)
         if show:
             plt.show()
-
-

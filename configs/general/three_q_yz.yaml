@@ -45,8 +45,7 @@ control:
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
-state-init: 50
-control-init: 50
+state-control-init: 50
 
 transfer-init:
     iters: 10

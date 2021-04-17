@@ -14,6 +14,7 @@ if len(args) < 2:
     #configPath = './configs/three_q/general_tests/3q_c1.yaml'
     #configPath = './problems/one_qubit_1/one_q_config.yaml'
     configPath = './configs/general/hadamard_great.yaml'
+    configPath = './configs/general/three_q_1.yaml'
     outputPath = 'results_10.pickle'
 else:
     configPath = args[0]

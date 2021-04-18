@@ -4,7 +4,7 @@
 problem: three_q_yz
 
 input-states:
-  - '+++'
+  - '---'
 
 state:
   opt-1:
@@ -28,7 +28,7 @@ transfer:
     alpha-min: 0
     pow: 2
   opt-2:
-    iters: 190
+    iters: 290
     acq: 'ucb'
     kappa: 0.2
     kappa-decay: 0.7
@@ -36,7 +36,7 @@ transfer:
 
 control:
   opt-1:
-    iters: 200
+    iters: 2
     acq: 'ucb'
     kappa: 10
     kappa-decay: 0.95

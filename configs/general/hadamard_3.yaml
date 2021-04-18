@@ -29,7 +29,7 @@ transfer:
     alpha-min: 0
     pow: 2
   opt-2:
-    iters: 160
+    iters: 360
     acq: 'ucb'
     kappa: 1
     kappa-decay: 0.8
@@ -37,7 +37,7 @@ transfer:
 
 control:
   opt-1:
-    iters: 200
+    iters: 400
     acq: 'ucb'
     kappa: 5
     kappa-decay: 0.95

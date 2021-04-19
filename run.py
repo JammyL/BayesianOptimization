@@ -1,4 +1,4 @@
-from problems import hadamard, hadamardRandomState, twoQubitCircuit, threeQubitCircuit, threeQubitCircuitYZ, oneQubitCircuit
+from problems import hadamard, hadamardRandomState, twoQubitCircuit, threeQubitCircuit, threeQubitCircuitYZ, oneQubitCircuit, threeQubitCircuitRandom
 from qutip.qip.operations import snot
 from qutip.tensor import tensor
 from qutip.random_objects import rand_ket
@@ -14,7 +14,8 @@ if len(args) < 2:
     #configPath = './configs/three_q/general_tests/3q_c1.yaml'
     #configPath = './problems/one_qubit_1/one_q_config.yaml'
     configPath = './configs/general/hadamard_great.yaml'
-    configPath = './configs/general/three_q_1.yaml'
+    configPath = './configs/general/three_q_yz.yaml'
+    configPath = './problems/three_qubits_random/three_q_config.yaml'
     outputPath = 'results_10.pickle'
 else:
     configPath = args[0]
@@ -31,7 +32,8 @@ problem_dict = {
     'two_q': twoQubitCircuit,
     'three_q': threeQubitCircuit,
     'three_q_yz': threeQubitCircuitYZ,
-    'one_q_1': oneQubitCircuit
+    'one_q_1': oneQubitCircuit,
+    'three_q_rand': threeQubitCircuitRandom,
 }
 
 if 'problem' in config.keys():

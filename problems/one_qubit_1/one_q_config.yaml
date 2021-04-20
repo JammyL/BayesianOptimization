@@ -5,7 +5,7 @@
 problem: one_q_1
 
 input-states:
-  - '0'
+  - 'R'
 
 state:
   opt-1:
@@ -30,7 +30,7 @@ transfer:
     alpha-min: 0
     pow: 2
   opt-2:
-    iters: 150
+    iters: 200
     acq: 'ucb'
     kappa: 1
     kappa-decay: 0.8
@@ -38,7 +38,7 @@ transfer:
 
 control:
   opt-1:
-    iters: 200
+    iters: 250
     acq: 'ucb'
     kappa: 5
     kappa-decay: 0.8

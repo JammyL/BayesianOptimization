@@ -6,9 +6,10 @@ problem: three_q_yz
 input-states:
   - '111'
 
+
 state:
   opt-1:
-    iters: 30
+    iters: 102
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1.0
@@ -16,7 +17,7 @@ state:
 
 transfer:
   opt-1:
-    iters: 20
+    iters: 30
     acq: 'multi_ucb'
     kappa: 100
     kappa-decay: 1.0
@@ -28,7 +29,7 @@ transfer:
     alpha-min: 0
     pow: 2
   opt-2:
-    iters: 190
+    iters: 200
     acq: 'ucb'
     kappa: 0.2
     kappa-decay: 0.7
@@ -36,7 +37,7 @@ transfer:
 
 control:
   opt-1:
-    iters: 300
+    iters: 2
     acq: 'ucb'
     kappa: 10
     kappa-decay: 0.9

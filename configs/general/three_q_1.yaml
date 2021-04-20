@@ -4,52 +4,51 @@
 problem: three_q_yz
 
 input-states:
-  - '+-+'
-  - '011'
-  - 'LLR'
+  - '000'
+  - '---'
 
 state:
   opt-1:
-    iters: 30
+    iters: 102
     acq: 'ucb'
     kappa: 10
-    kappa-decay: 1.0
+    kappa-decay: 0.9
     kappa-delay: 150
 
 transfer:
   opt-1:
-    iters: 20
+    iters: 30
     acq: 'multi_ucb'
     kappa: 100
     kappa-decay: 1.0
     kappa-delay: 30
     kappa-min: 1
-    alpha: 1
+    alpha: 10
     alpha-decay: 0.8
     alpha-delay: 10
     alpha-min: 0
     pow: 2
   opt-2:
-    iters: 290
+    iters: 200
     acq: 'ucb'
     kappa: 0.2
-    kappa-decay: 0.7
+    kappa-decay: 0.8
     kappa-delay: 20
 
-control:
+  control:
   opt-1:
     iters: 2
     acq: 'ucb'
     kappa: 10
-    kappa-decay: 0.98
-    kappa-delay: 20
+    kappa-decay: 0.95
+    kappa-delay: 30
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
 state-control-init: 50
 
 transfer-init:
-    iters: 10
+    iters: 20
     acq: 'ucb'
     kappa: 0.5
     xi: 0.0

@@ -6,10 +6,11 @@ problem: three_q_yz
 input-states:
   - '000'
   - "RRR"
+  - '+++'
 
 state:
   opt-1:
-    iters: 102
+    iters: 60
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1.0

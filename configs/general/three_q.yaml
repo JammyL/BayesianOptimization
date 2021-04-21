@@ -9,7 +9,7 @@ input-states:
 
 state:
   opt-1:
-    iters: 102
+    iters: 90
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1.0

@@ -4,15 +4,16 @@
 problem: three_q_yz
 
 input-states:
-  - 'RRR'
+  - '000'
+  - "RRR"
   - '+++'
 
 state:
   opt-1:
-    iters: 102
+    iters: 30
     acq: 'ucb'
     kappa: 10
-    kappa-decay: 0.9
+    kappa-decay: 1.0
     kappa-delay: 150
 
 transfer:
@@ -23,7 +24,7 @@ transfer:
     kappa-decay: 1.0
     kappa-delay: 30
     kappa-min: 1
-    alpha: 10
+    alpha: 1
     alpha-decay: 0.8
     alpha-delay: 10
     alpha-min: 0
@@ -32,10 +33,10 @@ transfer:
     iters: 200
     acq: 'ucb'
     kappa: 0.2
-    kappa-decay: 0.8
+    kappa-decay: 0.7
     kappa-delay: 20
 
-  control:
+control:
   opt-1:
     iters: 2
     acq: 'ucb'
@@ -48,7 +49,7 @@ transfer:
 state-control-init: 50
 
 transfer-init:
-    iters: 20
+    iters: 10
     acq: 'ucb'
     kappa: 0.5
     xi: 0.0

@@ -4,8 +4,9 @@
 problem: three_q_yz
 
 input-states:
-  - 'RRR'
-
+  - '000'
+  - "RRR"
+  - '+++'
 
 state:
   opt-1:
@@ -40,8 +41,8 @@ control:
     iters: 2
     acq: 'ucb'
     kappa: 10
-    kappa-decay: 0.9
-    kappa-delay: 40
+    kappa-decay: 0.95
+    kappa-delay: 30
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair

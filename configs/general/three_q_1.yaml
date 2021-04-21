@@ -4,8 +4,8 @@
 problem: three_q_yz
 
 input-states:
-  - '000'
-  - '---'
+  - 'RRR'
+  - '+++'
 
 state:
   opt-1:

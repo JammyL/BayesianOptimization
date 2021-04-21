@@ -4,7 +4,7 @@
 problem: three_q_yz
 
 input-states:
-  - '111'
+  - 'RRR'
 
 
 state:

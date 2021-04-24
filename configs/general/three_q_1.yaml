@@ -4,13 +4,13 @@
 problem: three_q_yz
 
 input-states:
-  - '000'
+  - '+++'
+  - 'RRR'
   - '111'
-  - '101'
 
 state:
   opt-1:
-    iters: 30
+    iters: 10
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1.0
@@ -38,7 +38,7 @@ transfer:
 
 control:
   opt-1:
-    iters: 2
+    iters: 1
     acq: 'ucb'
     kappa: 10
     kappa-decay: 0.95
@@ -46,7 +46,7 @@ control:
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
-state-control-init: 50
+state-control-init: 10
 
 transfer-init:
     iters: 10

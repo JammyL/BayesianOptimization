@@ -5,11 +5,11 @@ problem: three_q_yz
 
 input-states:
   - '000'
-  - '111'
+  - 'RRR'
 
 state:
   opt-1:
-    iters: 30
+    iters: 45
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1.0

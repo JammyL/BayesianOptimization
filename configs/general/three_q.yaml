@@ -10,7 +10,7 @@ input-states:
 
 state:
   opt-1:
-    iters: 5
+    iters: 3
     acq: 'ucb'
     kappa: 10
     kappa-decay: 1.0
@@ -46,7 +46,7 @@ control:
 
 # Number of initialization iters for state and control optimizers
 # These values must be the same for state and contorl to keep the testing fair
-state-control-init: 50
+state-control-init: 10
 
 transfer-init:
     iters: 10
